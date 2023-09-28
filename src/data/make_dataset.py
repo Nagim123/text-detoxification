@@ -1,13 +1,18 @@
 import requests
 import pandas as pd
 import os
+import argparse
+import logging
+
+import pathlib
+script_path = pathlib.Path(__file__).parent.resolve()
 
 class BaseDatasetMaker():
     def __init__(self, output_dir: str, file_path: str = None) -> None:
-        if file_path == None:
+        if file_path == None or not os.path.exists(file_path):
+            logging.warning(f"Cannot find file {file_path}, downloading from internet...")
             file_path = self.download_data()
-        if not os.path.exists(file_path):
-            raise Exception(f"Cannot find path {file_path}")
+        
         # Set path to file with raw data
         self.file_path = file_path
         # Parse raw data into meaningful structure
@@ -27,10 +32,29 @@ class BaseDatasetMaker():
         raise Exception("Not implemented")
 
 class ParaNMTDetoxDatasetMaker(BaseDatasetMaker):
+    def __init__(self) -> None:
+        output_dir = os.path.join(script_path, "..\\..\\data\\interim")
+        file_path = os.path.join(script_path, "..\\..\\data\\raw\\filtered_paranmt.zip")
+        super().__init__(output_dir, file_path)
 
     def download_data(self) -> str:
         url = "https://github.com/skoltech-nlp/detox/releases/download/emnlp2021/filtered_paranmt.zip"
+        file_path = os.path.join(script_path, "..\\..\\data\\raw\\filtered_paranmt.zip")
+        
         response = requests.get(url)
-        data_file = open("filtered_paranmt.zip", "wb")
+        data_file = open(file_path, "wb")
         data_file.write(response.content)
 
+supported_datasets = {
+    "ParaNMT": ParaNMTDetoxDatasetMaker,
+}
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("dataset", choices=["ParaNMT", "other"])
+    args = parser.parse_args()
+
+    if args.dataset in supported_datasets:
+        supported_datasets[args.dataset]()
+    else:
+        raise Exception(f"Dataset {args.dataset} is not supported!")
