@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     best_loss = 1e9
     for epoch in range(epochs):
-        train_loss = train_one_epoch(model, train_loader, loss_fn, optimizer)
+        train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer)
         val_loss = val_one_epoch(model, val_loader, loss_fn)
         if train_loss < best_loss:
             best_loss = train_loss

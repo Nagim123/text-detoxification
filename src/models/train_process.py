@@ -1,6 +1,6 @@
 import tqdm as tqdm
 
-def train_one_epoch(model, loader, epoch, optimizer, loss_fn, device):
+def train_one_epoch(model, loader, epoch, loss_fn, optimizer, device):
     loop = tqdm(
         enumerate(loader, 1),
         total=len(loader),
