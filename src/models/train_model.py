@@ -1,6 +1,9 @@
 from tokenizers.basic_tokenizer import BasicTokenizer
 from tokenizers.custom_torch_tokenizer import CustomTorchTokenizer
 from models.model import DetoxificationModel
+from torch.utils.data import DataLoader, Dataset, random_split
+from train_process import train_one_epoch, val_one_epoch
+import torch.nn as nn
 import torch
 import pandas as pd
 import os
@@ -10,7 +13,7 @@ script_path = pathlib.Path(__file__).parent.resolve()
 import argparse
 
 
-class ToxicTextDataset(torch.utils.data.Dataset):
+class ToxicTextDataset(Dataset):
     def __init__(self, df: pd.DataFrame, tokenizer: BasicTokenizer):
         self.tokenizer = tokenizer
         
@@ -32,8 +35,12 @@ class ToxicTextDataset(torch.utils.data.Dataset):
         return len(self.toxic_texts)
 
 
-def create_dataloaders(df: pd.DataFrame):
-    pass
+def create_dataloaders(df: pd.DataFrame, batch_size=32) -> tuple[DataLoader, DataLoader]:
+    dataset = ToxicTextDataset(df, CustomTorchTokenizer())
+    train_dataset, val_dataset = random_split(dataset, [0.7, 0.3])
+    train_loader = DataLoader(train_dataset, batch_size=batch_size)
+    val_loader = DataLoader(val_loader, batch_size=batch_size)
+    return train_loader, val_loader
 
 def load_model(model_name: str, require_weights: bool, default_variant):
     path_to_model = os.path.join(script_path, f"../../models/{model_name}.pt")
@@ -60,7 +67,6 @@ if __name__ == "__main__":
     parser.add_argument("epochs", type=int)
     #parser.add_argument("loss", choices=list(loss_functions.keys()))
     parser.add_argument("--weights", action='store_true')
-    parser.add_argument("--GAN_model", type=str)
     
     args = parser.parse_args()
     epochs = args.epochs
@@ -71,15 +77,15 @@ if __name__ == "__main__":
     
 
     train_loader, val_loader = create_dataloaders()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters())
 
     best_loss = 1e9
     for epoch in range(epochs):
-        pass
-        # train_loss = train_one_epoch(model, train_loader, loss_fn, optimizer)
-        # val_loss = val_one_epoch(model, val_loader, loss_fn)
-        # if train_loss < best_loss:
-        #     best_loss = train_loss
-        #     logging.info("New best loss. Checkpoint is saved!")
-        #     torch.save(model.state_dict(), model_weights_save_path)
-        # print(f"Epoch {epoch} train_loss:{train_loss}, val_loss:{val_loss}")
+        train_loss = train_one_epoch(model, train_loader, loss_fn, optimizer)
+        val_loss = val_one_epoch(model, val_loader, loss_fn)
+        if train_loss < best_loss:
+            best_loss = train_loss
+            logging.info("New best loss. Checkpoint is saved!")
+            torch.save(model.state_dict(), model_weights_save_path)
+        print(f"Epoch {epoch} train_loss:{train_loss}, val_loss:{val_loss}")
