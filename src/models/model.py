@@ -2,15 +2,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class DetoxificationModel(nn.Module):
-    def __init__(self,  embedding_dim, hidden_dim, vocab_size, tagset_size):
+    def __init__(self, vocab_size):
         super().__init__()
+        
+        embedding_dim = 1024
+        hidden_dim = 2048
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=4, bidirectional=True, dropout=0.25)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, dropout=0.25, batch_first=True)
         self.hidden2tag = nn.Sequential(
             nn.Linear(hidden_dim*2, hidden_dim),
             nn.ReLU(),
             nn.Dropout(0.25),
-            nn.Linear(hidden_dim, tagset_size),
+            nn.Linear(hidden_dim, vocab_size),
         )
         
     def forward(self, text):

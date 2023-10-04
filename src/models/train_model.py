@@ -1,6 +1,6 @@
 from tokenizers.basic_tokenizer import BasicTokenizer
 from tokenizers.custom_torch_tokenizer import CustomTorchTokenizer
-from models.model import DetoxificationModel
+from model import DetoxificationModel
 from torch.utils.data import DataLoader, Dataset, random_split
 from train_process import train_one_epoch, val_one_epoch
 import torch.nn as nn
@@ -25,7 +25,7 @@ class ToxicTextDataset(Dataset):
         self.tokenizer.create_vocab(full_text)
         self.tokenized_labels = [self.tokenizer.tokenize(text) for text in self.toxic_texts]
         self.tokenized_targets = [self.tokenizer.tokenize(text) for text in self.detoxified_texts]
-        
+        self.vocab_size = len(self.tokenizer)
         
 
     def __getitem__(self, index: int) -> tuple[list, list]:
@@ -39,16 +39,16 @@ def create_dataloaders(df: pd.DataFrame, batch_size=32) -> tuple[DataLoader, Dat
     dataset = ToxicTextDataset(df, CustomTorchTokenizer())
     train_dataset, val_dataset = random_split(dataset, [0.7, 0.3])
     train_loader = DataLoader(train_dataset, batch_size=batch_size)
-    val_loader = DataLoader(val_loader, batch_size=batch_size)
-    return train_loader, val_loader
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+    return train_loader, val_loader, dataset.vocab_size
 
-def load_model(model_name: str, require_weights: bool, default_variant):
+def load_model(model_name: str, require_weights: bool, default_model):
     path_to_model = os.path.join(script_path, f"../../models/{model_name}.pt")
     path_to_weights = os.path.join(script_path, f"../../models//{model_name}.pth")
 
     if not os.path.exists(path_to_model):
         logging.warn(f"Model {model_name} is not enough. Training current one from scratch!")
-        model = default_variant()
+        model = default_model
         model_scripted = torch.jit.script(model)
         model_scripted.save(path_to_model)
     else:
@@ -65,25 +65,27 @@ if __name__ == "__main__":
     parser.add_argument("model_name", type=str)
     parser.add_argument("dataset", type=str)
     parser.add_argument("epochs", type=int)
-    #parser.add_argument("loss", choices=list(loss_functions.keys()))
     parser.add_argument("--weights", action='store_true')
     
     args = parser.parse_args()
     epochs = args.epochs
     
+    # Loading dataset
+    path_to_dataset = os.path.join(script_path, f"../../data/interim/{args.dataset}")
+    train_loader, val_loader, vocab_size = create_dataloaders(pd.read_csv(path_to_dataset))
 
     # Loading model
-    model, model_weights_save_path = load_model(args.model_name, args.weights, DetoxificationModel)
+    model, model_weights_save_path = load_model(args.model_name, args.weights, DetoxificationModel(vocab_size))
     
-
-    train_loader, val_loader = create_dataloaders()
+    
+    
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters())
 
     best_loss = 1e9
     for epoch in range(epochs):
         train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer)
-        val_loss = val_one_epoch(model, val_loader, loss_fn)
+        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, loss_fn, optimizer)
         if train_loss < best_loss:
             best_loss = train_loss
             logging.info("New best loss. Checkpoint is saved!")
