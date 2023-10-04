@@ -13,7 +13,7 @@ class ToxicTextDataset(Dataset):
         self.detoxified_texts = df.apply(lambda x: eval(x['label']), axis=1)
 
     def __getitem__(self, index: int) -> tuple[list, list]:
-        return self.tokenized_labels[index], self.tokenized_targets[index]
+        return self.toxic_texts[index], self.detoxified_texts[index]
     
     def __len__(self):
         return len(self.toxic_texts)

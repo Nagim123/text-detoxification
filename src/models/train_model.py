@@ -45,15 +45,13 @@ if __name__ == "__main__":
     # Loading model
     model, model_weights_save_path = load_model(args.model_name, args.weights, DetoxificationModel(vocab_size))
     
-    
-    
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters())
 
     best_loss = 1e9
     for epoch in range(epochs):
-        train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer)
-        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, loss_fn, optimizer)
+        train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer, 'cpu')
+        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, loss_fn, optimizer, 'cpu')
         if train_loss < best_loss:
             best_loss = train_loss
             logging.info("New best loss. Checkpoint is saved!")

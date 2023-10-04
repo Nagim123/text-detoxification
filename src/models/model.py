@@ -5,15 +5,15 @@ class DetoxificationModel(nn.Module):
     def __init__(self, vocab_size):
         super().__init__()
         
-        embedding_dim = 1024
-        hidden_dim = 2048
+        embedding_dim = 2048
+        hidden_dim = 1024
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, dropout=0.25, batch_first=True)
         self.hidden2tag = nn.Sequential(
-            nn.Linear(hidden_dim*2, hidden_dim),
+            nn.Linear(hidden_dim, hidden_dim//2),
             nn.ReLU(),
             nn.Dropout(0.25),
-            nn.Linear(hidden_dim, vocab_size),
+            nn.Linear(hidden_dim//2, vocab_size),
         )
         
     def forward(self, text):

@@ -1,5 +1,5 @@
 import torch
-import tqdm as tqdm
+from tqdm import tqdm
 
 def train_one_epoch(model, loader, epoch, loss_fn, optimizer, device):
     loop = tqdm(
