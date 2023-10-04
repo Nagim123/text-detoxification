@@ -9,8 +9,8 @@ class ParaNMTDetoxDatasetMaker(BaseDatasetMaker):
     Dataset maker for ParaNMT dataset.
     """
     
-    def __init__(self) -> None:
-        super().__init__("filtered_paranmt.zip", "filtered_paranmt.csv")
+    def __init__(self, tokenizer) -> None:
+        super().__init__(tokenizer, "filtered_paranmt.zip", "filtered_paranmt.csv")
 
     def download_data(self) -> None:
         # Url to download ParaNMT
@@ -39,4 +39,13 @@ class ParaNMTDetoxDatasetMaker(BaseDatasetMaker):
         # Seperate translated and reference texts into toxic and detoxified ones
         parsed_df["toxic"] = self.content.apply(lambda row: row["reference"] if row["ref_tox"] > row["trn_tox"] else row["translation"], axis=1)
         parsed_df["detoxified"] = self.content.apply(lambda row: row["translation"] if row['ref_tox'] > row['trn_tox'] else row['reference'], axis=1)
-        return parsed_df
+        return parsed_df["toxic"].tolist(), parsed_df["detoxified"].tolist()
+    
+    def tokenize_data(self, toxic_text: list, detoxified_text: list) -> pd.DataFrame:
+        full_text = toxic_text + detoxified_text
+        self.tokenizer.create_vocab(full_text)
+        result_dataframe = pd.DataFrame()
+        result_dataframe["input"] = [self.tokenizer.tokenize(text) for text in toxic_text]
+        result_dataframe["label"] = [self.tokenizer.tokenize(text) for text in detoxified_text]
+        result_dataframe["vocab_size"] = len(self.tokenizer)
+        return result_dataframe

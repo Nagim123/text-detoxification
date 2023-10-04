@@ -1,7 +1,4 @@
-from tokenizers.basic_tokenizer import BasicTokenizer
-from tokenizers.custom_torch_tokenizer import CustomTorchTokenizer
 from model import DetoxificationModel
-from torch.utils.data import DataLoader, Dataset, random_split
 from train_process import train_one_epoch, val_one_epoch
 import torch.nn as nn
 import torch
@@ -13,34 +10,7 @@ script_path = pathlib.Path(__file__).parent.resolve()
 import argparse
 
 
-class ToxicTextDataset(Dataset):
-    def __init__(self, df: pd.DataFrame, tokenizer: BasicTokenizer):
-        self.tokenizer = tokenizer
-        
-        self.toxic_texts =  df["toxic"].tolist()
-        self.detoxified_texts = df["detoxified"].tolist()
 
-
-        full_text = self.toxic_texts + self.detoxified_texts
-        self.tokenizer.create_vocab(full_text)
-        self.tokenized_labels = [self.tokenizer.tokenize(text) for text in self.toxic_texts]
-        self.tokenized_targets = [self.tokenizer.tokenize(text) for text in self.detoxified_texts]
-        self.vocab_size = len(self.tokenizer)
-        
-
-    def __getitem__(self, index: int) -> tuple[list, list]:
-        return self.tokenized_labels[index], self.tokenized_targets[index]
-    
-    def __len__(self):
-        return len(self.toxic_texts)
-
-
-def create_dataloaders(df: pd.DataFrame, batch_size=32) -> tuple[DataLoader, DataLoader]:
-    dataset = ToxicTextDataset(df, CustomTorchTokenizer())
-    train_dataset, val_dataset = random_split(dataset, [0.7, 0.3])
-    train_loader = DataLoader(train_dataset, batch_size=batch_size)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size)
-    return train_loader, val_loader, dataset.vocab_size
 
 def load_model(model_name: str, require_weights: bool, default_model):
     path_to_model = os.path.join(script_path, f"../../models/{model_name}.pt")
