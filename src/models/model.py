@@ -21,6 +21,8 @@ class DetoxificationModel(nn.Module):
         # text shape= [sent len, batch size]
         embeds = self.word_embeddings(text)
         lstm_out, _ = self.lstm(embeds)
-        predictions = self.hidden2tag(lstm_out.permute((0,2,1)))
+        print(lstm_out.shape)
+        predictions = self.hidden2tag(lstm_out)
         # predictions shape = [sent len, batch size, output dim]
+        print(predictions.shape)
         return predictions#F.log_softmax(predictions,dim=1)
