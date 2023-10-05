@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader, Dataset, random_split
 import pandas as pd
 import torch
 
-MAX_SENTENCE_SIZE = 512
+MAX_SENTENCE_SIZE = 255
 UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
 
 class ToxicTextDataset(Dataset):
@@ -48,7 +48,7 @@ def collate_batch_test(batch: list):
     _toxic_batch = torch.stack(_toxic_batch, dim=0)
     return _toxic_batch
 
-def create_dataloaders(df: pd.DataFrame, batch_size=32) -> tuple[DataLoader, DataLoader]:
+def create_dataloaders(df: pd.DataFrame, batch_size=1) -> tuple[DataLoader, DataLoader]:
     dataset = ToxicTextDataset(df)
     train_dataset, val_dataset = random_split(dataset, [0.7, 0.3])
     train_loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=collate_batch_train)
