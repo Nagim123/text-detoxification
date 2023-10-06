@@ -7,7 +7,9 @@ script_path = pathlib.Path(__file__).parent.resolve()
 class BPETokenizer(BasicTokenizer):
 
     def create_vocab(self, full_text: list[str]) -> None:
-        self.vocab = RobertaTokenizerFast(os.path.join(script_path, "BPETokenizer"))
+        vocab_path = os.path.join(script_path, "BPETokenizer/vocab.json")
+        merge_path = os.path.join(script_path, "BPETokenizer/merges.txt")
+        self.vocab = RobertaTokenizerFast(vocab_path, merge_path)
 
     
     def tokenize(self, text: str) -> list:
