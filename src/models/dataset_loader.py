@@ -52,5 +52,5 @@ def create_dataloaders(df: pd.DataFrame, batch_size=1) -> tuple[DataLoader, Data
     dataset = ToxicTextDataset(df)
     train_dataset, val_dataset = random_split(dataset, [0.7, 0.3])
     train_loader = DataLoader(train_dataset, batch_size=batch_size, collate_fn=collate_batch_train)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, collate_fn=collate_batch_test)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, collate_fn=collate_batch_train)
     return train_loader, val_loader, dataset.vocab_size
