@@ -40,14 +40,16 @@ if __name__ == "__main__":
         vocab_size,
         )
     model, model_weights_save_path = load_model(args.model_name, args.weights, default_model)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model = model.to(device)
     
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters())
 
     best_loss = 1e9
     for epoch in range(epochs):
-        train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer, 'cpu')
-        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, loss_fn, optimizer, 'cpu')
+        train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer, device)
+        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, loss_fn, optimizer, device)
         if train_loss < best_loss:
             best_loss = train_loss
             logging.info("New best loss. Checkpoint is saved!")

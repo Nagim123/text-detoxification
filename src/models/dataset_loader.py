@@ -24,9 +24,11 @@ def collate_batch_train(batch: list):
     for _toxic, _detoxic in batch:
         if len(_toxic) > max_size:
             _toxic = _toxic[:max_size]
-            _detoxic = _detoxic[:max_size]
         else:
             _toxic += [PAD_IDX]*(max_size - len(_toxic))
+        if len(_detoxic) > max_size:
+            _detoxic = _detoxic[:max_size]
+        else:
             _detoxic += [PAD_IDX]*(max_size - len(_detoxic))
         _toxic_batch.append(torch.tensor(_toxic))
         _detoxic_batch.append(torch.tensor(_detoxic))
