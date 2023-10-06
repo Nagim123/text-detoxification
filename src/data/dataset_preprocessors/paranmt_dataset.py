@@ -37,8 +37,9 @@ class ParaNMTDetoxDatasetMaker(BaseDatasetMaker):
     def extract_toxic_and_detoxified_text(self) -> pd.DataFrame:
         parsed_df = pd.DataFrame()
         # Seperate translated and reference texts into toxic and detoxified ones
-        parsed_df["toxic"] = self.content.apply(lambda row: row["reference"] if row["ref_tox"] > row["trn_tox"] else row["translation"], axis=1)
-        parsed_df["detoxified"] = self.content.apply(lambda row: row["translation"] if row['ref_tox'] > row['trn_tox'] else row['reference'], axis=1)
+        # Also apply lowercasing
+        parsed_df["toxic"] = self.content.apply(lambda row: row["reference"].lower() if row["ref_tox"] > row["trn_tox"] else row["translation"].lower(), axis=1)
+        parsed_df["detoxified"] = self.content.apply(lambda row: row["translation"].lower() if row['ref_tox'] > row['trn_tox'] else row['reference'].lower(), axis=1)
         return parsed_df["toxic"].tolist(), parsed_df["detoxified"].tolist()
     
     def tokenize_data(self, toxic_text: list, detoxified_text: list) -> pd.DataFrame:
