@@ -1,4 +1,4 @@
-from model import DetoxificationModel
+from model import Seq2SeqTransformer
 from train_process import train_one_epoch, val_one_epoch
 from dataset_loader import create_dataloaders
 import torch.nn as nn
@@ -11,20 +11,8 @@ script_path = pathlib.Path(__file__).parent.resolve()
 import argparse
 
 def load_model(model_name: str, require_weights: bool, default_model):
-    path_to_model = os.path.join(script_path, f"../../models/{model_name}.pt")
     path_to_weights = os.path.join(script_path, f"../../models//{model_name}.pth")
-
-    if not os.path.exists(path_to_model):
-        logging.warn(f"Model {model_name} is not enough. Training current one from scratch!")
-        model = default_model
-        model_scripted = torch.jit.script(model)
-        model_scripted.save(path_to_model)
-    else:
-        model = torch.jit.load(path_to_model)
-        if require_weights:
-            if not os.path.exists(path_to_weights):
-                raise Exception("Model is loaded but weights not found!")
-            model.load_state_dict(torch.load(path_to_weights))
+    model = default_model
     
     return model, path_to_weights
 
@@ -43,7 +31,15 @@ if __name__ == "__main__":
     train_loader, val_loader, vocab_size = create_dataloaders(pd.read_csv(path_to_dataset))
 
     # Loading model
-    model, model_weights_save_path = load_model(args.model_name, args.weights, DetoxificationModel(vocab_size))
+    default_model = Seq2SeqTransformer(
+        3,
+        3,
+        512,
+        8,
+        vocab_size,
+        vocab_size,
+        )
+    model, model_weights_save_path = load_model(args.model_name, args.weights, default_model)
     
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters())
