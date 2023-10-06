@@ -15,7 +15,7 @@ def train_one_epoch(model, loader, epoch, loss_fn, optimizer, device):
         optimizer.zero_grad()
         texts, labels = batch
         texts, labels = texts.to(device), labels.to(device)
-        outputs = model(texts).to(device).permute((0, 2, 1))
+        outputs = model(texts, labels).to(device).permute((0, 2, 1))
         
         
         loss = loss_fn(outputs, labels)
@@ -44,7 +44,7 @@ def val_one_epoch(model, loader, epoch, loss_fn, optimizer, device):
             texts, labels = batch
             texts, labels = texts.to(device), labels.to(device)
             
-            outputs = model(texts).to(device).permute((0, 2, 1))
+            outputs = model(texts, labels).to(device).permute((0, 2, 1))
             loss = loss_fn(outputs, labels)
             
             #_, predicted = torch.max(outputs, 2)

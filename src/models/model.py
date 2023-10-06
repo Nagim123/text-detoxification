@@ -63,16 +63,10 @@ class Seq2SeqTransformer(nn.Module):
 
     def forward(self,
                 src: Tensor,
-                trg: Tensor,
-                src_mask: Tensor,
-                tgt_mask: Tensor,
-                src_padding_mask: Tensor,
-                tgt_padding_mask: Tensor,
-                memory_key_padding_mask: Tensor):
+                trg: Tensor):
         src_emb = self.positional_encoding(self.src_tok_emb(src))
         tgt_emb = self.positional_encoding(self.tgt_tok_emb(trg))
-        outs = self.transformer(src_emb, tgt_emb, src_mask, tgt_mask, None,
-                                src_padding_mask, tgt_padding_mask, memory_key_padding_mask)
+        outs = self.transformer(src_emb, tgt_emb)
         return self.generator(outs)
 
     def encode(self, src: Tensor, src_mask: Tensor):
