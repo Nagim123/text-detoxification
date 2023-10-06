@@ -15,4 +15,4 @@ class BPETokenizer(BasicTokenizer):
     def tokenize(self, text: str) -> list:
         if self.vocab is None:
             raise Exception("Call create_vocab() first!")
-        return self.vocab(text)
+        return self.vocab(text)['input_ids']
