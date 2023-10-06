@@ -49,7 +49,7 @@ if __name__ == "__main__":
     best_loss = 1e9
     for epoch in range(epochs):
         train_loss = train_one_epoch(model, train_loader, epoch, loss_fn, optimizer, device)
-        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, loss_fn, optimizer, device)
+        val_loss = val_one_epoch(model, val_loader, epoch, loss_fn, device)
         if train_loss < best_loss:
             best_loss = train_loss
             logging.info("New best loss. Checkpoint is saved!")

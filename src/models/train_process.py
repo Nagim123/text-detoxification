@@ -26,7 +26,7 @@ def train_one_epoch(model, loader, epoch, loss_fn, optimizer, device):
         
         loop.set_postfix({"loss": train_loss/total})
 
-def val_one_epoch(model, loader, epoch, loss_fn, optimizer, device):
+def val_one_epoch(model, loader, epoch, loss_fn, device):
     loop = tqdm(
         enumerate(loader, 1),
         total=len(loader),
