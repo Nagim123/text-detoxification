@@ -1,5 +1,5 @@
 from torchtext.vocab import build_vocab_from_iterator
-from tokenizers.basic_tokenizer import BasicTokenizer
+from text_tokenizers.basic_tokenizer import BasicTokenizer
 import nltk
 nltk.download('punkt')
 

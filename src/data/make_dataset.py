@@ -1,13 +1,15 @@
 import argparse
 from dataset_preprocessors.paranmt_dataset import ParaNMTDetoxDatasetMaker
-from tokenizers.custom_torch_tokenizer import CustomTorchTokenizer
+from text_tokenizers.custom_torch_tokenizer import CustomTorchTokenizer
+from text_tokenizers.bpe_tokenizer import BPETokenizer
 
 supported_datasets = {
     "ParaNMT": ParaNMTDetoxDatasetMaker,
 }
 
 supported_tokenizers = {
-    "CustomTokenizer": CustomTorchTokenizer()
+    "CustomTokenizer": CustomTorchTokenizer(),
+    "BPETokenizer": BPETokenizer(),
 }
 
 if __name__ == "__main__":
