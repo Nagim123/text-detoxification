@@ -1,7 +1,5 @@
 from zipfile import ZipFile
 from tqdm import tqdm
-from torchtext.vocab import build_vocab_from_iterator
-from torch.utils.data import Dataset
 import torch
 import logging
 import argparse
