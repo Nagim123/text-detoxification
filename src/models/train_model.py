@@ -8,30 +8,18 @@ from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 from torch import nn
 from torch import optim
+from predict_model import model_predict, SpacyTokenizer
 
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 DATASET_PATH = os.path.join(SCRIPT_PATH, "../../data/interim/dataset.pt")
 MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models/weights.pt")
 MAX_SENTENCE_SIZE = 100
-PAD_IDX = 1
+UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
+SPACY_TOKENIZER = SpacyTokenizer()
 
-def bleu(model, src, trg, vocab, device):
-    model.eval()
-    with torch.no_grad():
-        output = model(src, trg[:-1]).to(device)
-        output = output.permute([1, 0, 2])
-        trg = trg.permute([1, 0, 2])
-        token_list1 = []
-        token_list2 = []
-        idx2word = vocab.get_itos()
-        for t1, t2 in zip(output, trg):
-            t1 = torch.max(output, axis=1)
-            t1, t2 = t1.tolist(), t2.tolist()
-            token_list1.append([idx2word[t] for t in t1])
-            token_list2.append([idx2word[t] for t in t2])
-        return bleu_score(token_list1, token_list2)
-
-
+def bleu(model, input_seq, compare_seq, vocab):
+    output_seq = model_predict(model, vocab, input_seq, SPACY_TOKENIZER)
+    return bleu_score(compare_seq, output_seq)
 
 class DetoxificationModel(nn.Module):
     def __init__(self, embedding_size, vocab_size, dropout, max_len, device):
@@ -129,8 +117,15 @@ def collate_batch(batch: list):
     max_size = MAX_SENTENCE_SIZE
     _toxic_batch, _detoxic_batch = [], []
     for _toxic, _detoxic in batch:
-        _toxic = _toxic[:max_size] if len(_toxic) > max_size else _toxic + [PAD_IDX]*(max_size - len(_toxic))
-        _detoxic = _detoxic[:max_size] if len(_detoxic) > max_size else _detoxic + [PAD_IDX]*(max_size - len(_detoxic))
+        if len(_toxic) + 2 > max_size:
+            _toxic = BOS_IDX + _toxic[:max_size-2] + EOS_IDX 
+        else:
+            _toxic = BOS_IDX + _toxic + [PAD_IDX]*(max_size - len(_toxic) - 2) + EOS_IDX
+
+        if len(_detoxic) + 2 > max_size:
+            _toxic = BOS_IDX + _detoxic[:max_size-2] + EOS_IDX 
+        else:
+            _detoxic = BOS_IDX + _detoxic + [PAD_IDX]*(max_size - len(_detoxic) - 2) + EOS_IDX
         _toxic_batch.append(torch.tensor(_toxic))
         _detoxic_batch.append(torch.tensor(_detoxic))
     
