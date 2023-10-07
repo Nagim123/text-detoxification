@@ -4,22 +4,15 @@ import os
 import argparse
 from torch.utils.data import random_split, Dataset, DataLoader
 from torchtext.vocab import build_vocab_from_iterator
-from torchtext.data.metrics import bleu_score
 from tqdm import tqdm
 from torch import nn
 from torch import optim
-from predict_model import model_predict, SpacyTokenizer
 
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 DATASET_PATH = os.path.join(SCRIPT_PATH, "../../data/interim/dataset.pt")
 MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models/weights.pt")
 MAX_SENTENCE_SIZE = 100
 UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
-SPACY_TOKENIZER = SpacyTokenizer()
-
-def bleu(model, input_seq, compare_seq, vocab):
-    output_seq = model_predict(model, vocab, input_seq, SPACY_TOKENIZER)
-    return bleu_score(compare_seq, output_seq)
 
 class DetoxificationModel(nn.Module):
     def __init__(self, embedding_size, vocab_size, dropout, max_len, device):
