@@ -12,7 +12,7 @@ from torch import optim
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 DATASET_PATH = os.path.join(SCRIPT_PATH, "../../data/interim/dataset.pt")
 MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models/weights.pt")
-MAX_SENTENCE_SIZE = 255
+MAX_SENTENCE_SIZE = 100
 PAD_IDX = 1
 
 def bleu(model, src, trg, vocab, device):
