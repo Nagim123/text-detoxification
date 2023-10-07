@@ -43,10 +43,6 @@ def tokenize_texts(texts: list[str], do_logging: bool = False):
         tokenized_texts.append([tok.text for tok in spacy_eng.tokenizer(text)])
     return tokenized_texts
 
-def tokenize_text(text: list[str]):
-    spacy_eng = spacy.load("en_core_web_sm")
-    return [tok.text for tok in spacy_eng.tokenizer(text)]
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("--logging", action="store_true")
