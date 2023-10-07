@@ -111,14 +111,14 @@ def collate_batch(batch: list):
     _toxic_batch, _detoxic_batch = [], []
     for _toxic, _detoxic in batch:
         if len(_toxic) + 2 > max_size:
-            _toxic = BOS_IDX + _toxic[:max_size-2] + EOS_IDX 
+            _toxic = [BOS_IDX] + _toxic[:max_size-2] + [EOS_IDX] 
         else:
-            _toxic = BOS_IDX + _toxic + [PAD_IDX]*(max_size - len(_toxic) - 2) + EOS_IDX
+            _toxic = [BOS_IDX] + _toxic + [PAD_IDX]*(max_size - len(_toxic) - 2) + [EOS_IDX]
 
         if len(_detoxic) + 2 > max_size:
-            _toxic = BOS_IDX + _detoxic[:max_size-2] + EOS_IDX 
+            _toxic = [BOS_IDX] + _detoxic[:max_size-2] + [EOS_IDX] 
         else:
-            _detoxic = BOS_IDX + _detoxic + [PAD_IDX]*(max_size - len(_detoxic) - 2) + EOS_IDX
+            _detoxic = [BOS_IDX] + _detoxic + [PAD_IDX]*(max_size - len(_detoxic) - 2) + [EOS_IDX]
         _toxic_batch.append(torch.tensor(_toxic))
         _detoxic_batch.append(torch.tensor(_detoxic))
     
