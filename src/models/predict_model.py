@@ -70,7 +70,7 @@ def tensor2text(input_tensor, vocab):
 def model_predict(model, vocab, input_data, tokenizer, device):
     model.eval()
     tokenized_data = tokenizer.tokenize(input_data)
-    tokenized_data = torch.tensor(vocab(tokenized_data)).unsqueeze(0).permute((1, 0))
+    tokenized_data = torch.tensor([BOS_IDX] + vocab(tokenized_data) + [EOS_IDX]).unsqueeze(0).permute((1, 0))
     y_input = torch.tensor([[BOS_IDX]], dtype=torch.long, device=device)
     with torch.no_grad():
         for _ in range(MAX_SENTENCE_SIZE):
@@ -80,8 +80,9 @@ def model_predict(model, vocab, input_data, tokenizer, device):
             if next_token == EOS_IDX:
                 break
             next_tensor = torch.tensor([[next_token]])
+            print(next_tensor)
             y_input = torch.cat((y_input, next_tensor), dim=0)
-    return tensor2text(y_input.view(-1))
+    return tensor2text(y_input.view(-1), vocab)
 
 if __name__ == "__main__":
 
@@ -90,12 +91,11 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     text_data = torch.load(DATASET_PATH)
-    
-    special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
-    vocab = build_vocab_from_iterator(text_data["toxic"] + text_data["detoxified"], special_first=special_symbols, max_tokens=10000, min_freq=2)
-    vocab.set_default_index(0)
 
+    special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
+    vocab = build_vocab_from_iterator(text_data["toxic"] + text_data["detoxified"], specials=special_symbols, max_tokens=10000, min_freq=2)
+    vocab.set_default_index(0)
     model = DetoxificationModel(512, len(vocab), 0.1, MAX_SENTENCE_SIZE, device).to(device)
     model.load_state_dict(torch.load(MODEL_WEIGHTS_PATH, map_location=device))
     
-    print(" ".join(model_predict(model, vocab, input_data, SpacyTokenizer())))
+    print(" ".join(model_predict(model, vocab, input_data, SpacyTokenizer(), device)))

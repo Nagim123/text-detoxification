@@ -63,7 +63,7 @@ class ToxicTextDataset(Dataset):
         self.toxic_texts = toxic_texts
         self.detoxified_texts = detoxified_texts
         self.special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
-        self.vocab = build_vocab_from_iterator(toxic_texts + detoxified_texts, special_first=self.special_symbols, max_tokens=10000, min_freq=2)
+        self.vocab = build_vocab_from_iterator(toxic_texts + detoxified_texts, specials=self.special_symbols, max_tokens=10000, min_freq=2)
         self.vocab.set_default_index(0)
 
     def __getitem__(self, index: int) -> tuple[list, list]:
