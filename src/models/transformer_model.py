@@ -79,3 +79,20 @@ def val_one_epoch(model, val_loader, loss_fn, device):
             
             loss = loss_fn(output, target)
             progress.set_postfix({"loss":loss.item()})
+    
+def predict(model, vocab, input_data, tokenizer, max_sentence_size, bos_idx, eos_idx, device):
+    model.eval()
+    tokenized_data = tokenizer.tokenize(input_data)
+    tokenized_data = torch.tensor([bos_idx] + vocab(tokenized_data) + [eos_idx]).unsqueeze(0).permute((1, 0))
+    y_input = torch.tensor([[bos_idx]], dtype=torch.long, device=device)
+    with torch.no_grad():
+        for _ in range(max_sentence_size):
+            pred = model(tokenized_data, y_input).to(device)
+            _, token_id = torch.max(pred, axis=2)
+            next_token = token_id.view(-1)[-1].item()
+            if next_token == eos_idx:
+                break
+            next_tensor = torch.tensor([[next_token]])
+            print(next_tensor)
+            y_input = torch.cat((y_input, next_tensor), dim=0)
+    return y_input.view(-1)

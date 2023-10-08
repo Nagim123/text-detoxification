@@ -1,7 +1,10 @@
 import torch
+import argparse
 import pathlib
 import os
 import spacy
+import transformer_model
+import lstm_model
 from torchtext.vocab import build_vocab_from_iterator
 from torch import nn
 
@@ -67,23 +70,6 @@ def tensor2text(input_tensor, vocab):
     tokens_list = input_tensor.tolist()
     return [idx2word[i] for i in tokens_list]
 
-def model_predict(model, vocab, input_data, tokenizer, device):
-    model.eval()
-    tokenized_data = tokenizer.tokenize(input_data)
-    tokenized_data = torch.tensor([BOS_IDX] + vocab(tokenized_data) + [EOS_IDX]).unsqueeze(0).permute((1, 0))
-    y_input = torch.tensor([[BOS_IDX]], dtype=torch.long, device=device)
-    with torch.no_grad():
-        for _ in range(MAX_SENTENCE_SIZE):
-            pred = model(tokenized_data, y_input).to(device)
-            _, token_id = torch.max(pred, axis=2)
-            next_token = token_id.view(-1)[-1].item()
-            if next_token == EOS_IDX:
-                break
-            next_tensor = torch.tensor([[next_token]])
-            print(next_tensor)
-            y_input = torch.cat((y_input, next_tensor), dim=0)
-    return tensor2text(y_input.view(-1), vocab)
-
 if __name__ == "__main__":
 
     with open(INPUT_FILE_PATH, "r") as input_file:
@@ -95,7 +81,25 @@ if __name__ == "__main__":
     special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
     vocab = build_vocab_from_iterator(text_data["toxic"] + text_data["detoxified"], specials=special_symbols, max_tokens=10000, min_freq=2)
     vocab.set_default_index(0)
-    model = DetoxificationModel(512, len(vocab), 0.1, MAX_SENTENCE_SIZE, device).to(device)
-    model.load_state_dict(torch.load(MODEL_WEIGHTS_PATH, map_location=device))
     
-    print(" ".join(model_predict(model, vocab, input_data, SpacyTokenizer(), device)))
+    available_models = {
+        "transformer": {
+            "model": transformer_model.DetoxificationModel(512, len(vocab), 0.1, MAX_SENTENCE_SIZE, PAD_IDX, device).to(device),
+            "predict": transformer_model.predict,
+        },
+        "LSTM": {
+            "model": lstm_model.DetoxificationModel(len(vocab), 512, 1024).to(device),
+            "predict": lstm_model.predict,
+        }
+    }
+    
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("model_type", choices=list(available_models.keys()))
+    args = parser.parse_args()
+
+    model = available_models[args.model_type]["model"]
+    model.load_state_dict(torch.load(MODEL_WEIGHTS_PATH, map_location=device))
+    model_predict = available_models[args.model_type]["predict"]
+
+    result = tensor2text(model_predict(model, vocab, input_data, SpacyTokenizer(), MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab)
+    print(" ".join(result))
