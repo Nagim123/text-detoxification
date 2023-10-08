@@ -88,7 +88,7 @@ if __name__ == "__main__":
             "predict": transformer_model.predict,
         },
         "LSTM": {
-            "model": lstm_model.DetoxificationModel(len(vocab), 512, 1024).to(device),
+            "model": lstm_model.DetoxificationModel(len(vocab), 512, 1024, device).to(device),
             "predict": lstm_model.predict,
         }
     }
@@ -102,4 +102,4 @@ if __name__ == "__main__":
     model_predict = available_models[args.model_type]["predict"]
 
     result = tensor2text(model_predict(model, vocab, input_data, SpacyTokenizer(), MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab)
-    print(" ".join(result))
+    print(" ".join(result[1:]))
