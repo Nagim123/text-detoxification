@@ -32,7 +32,7 @@ def train_one_epoch(model, train_loader, optmizer, loss_fn, device):
     for batch in progress:
         input, target = batch
         input, target = input.to(device), target.to(device)
-        output = model(input)
+        output = model(input).to(device)
         output = output.reshape(-1, output.shape[2])
         target = target.reshape(-1)
         optmizer.zero_grad()
@@ -51,7 +51,7 @@ def val_one_epoch(model, val_loader, loss_fn, device):
             input, target = batch
             input, target = input.to(device), target.to(device)
 
-            output = model(input)
+            output = model(input).to(device)
             output = output.reshape(-1, output.shape[2])
             target = target.reshape(-1)
             

@@ -68,7 +68,7 @@ if __name__ == "__main__":
             "validate": transformer_model.val_one_epoch,
         },
         "LSTM": {
-            "model": lstm_model.DetoxificationModel(vocab_size, 512, 1024),
+            "model": lstm_model.DetoxificationModel(vocab_size, 512, 1024).to(device),
             "train": lstm_model.train_one_epoch,
             "validate": lstm_model.val_one_epoch,
         }
