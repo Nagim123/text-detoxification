@@ -2,9 +2,11 @@ import torch
 import pathlib
 import os
 import argparse
+import transformer_model
+
 from torch.utils.data import random_split, Dataset, DataLoader
 from torchtext.vocab import build_vocab_from_iterator
-from tqdm import tqdm
+
 from torch import nn
 from torch import optim
 
@@ -14,49 +16,6 @@ MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models/weights.pt")
 MAX_SENTENCE_SIZE = 100
 UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
 
-class DetoxificationModel(nn.Module):
-    def __init__(self, embedding_size, vocab_size, dropout, max_len, device):
-        super(DetoxificationModel, self).__init__()
-        self.word_embedding = nn.Embedding(vocab_size, embedding_size)
-        self.position_embedding = nn.Embedding(max_len, embedding_size)
-        self.device = device
-        self.transformer = nn.Transformer(embedding_size, 8, 3, 3, 4, dropout, batch_first=False)
-        self.fc_out = nn.Linear(embedding_size, vocab_size)
-        self.dropout = nn.Dropout(dropout)
-        self.src_pad_idx = PAD_IDX
-    
-    def make_src_mask(self, src):
-        src_mask = src.transpose(0, 1) == self.src_pad_idx
-        return src_mask
-    
-    def forward(self, src, trg):
-        src_seq_len, N = src.shape
-        trg_seq_len, N = trg.shape
-
-        src_positions = (
-            torch.arange(0, src_seq_len).unsqueeze(1).expand(src_seq_len, N)
-            .to(self.device)
-        )
-        trg_positions = (
-            torch.arange(0, trg_seq_len).unsqueeze(1).expand(trg_seq_len, N)
-            .to(self.device)
-        )
-        embed_src = self.dropout(
-            (self.word_embedding(src) + self.position_embedding(src_positions))
-        )
-        embed_trg = self.dropout(
-            (self.word_embedding(trg) + self.position_embedding(trg_positions))
-        )
-        src_padding_mask = self.make_src_mask(src)
-        trg_mask = self.transformer.generate_square_subsequent_mask(trg_seq_len, self.device)
-        out = self.transformer(
-            embed_src,
-            embed_trg,
-            src_key_padding_mask = src_padding_mask,
-            tgt_mask = trg_mask
-        )
-        out = self.fc_out(out)
-        return out
 
 class ToxicTextDataset(Dataset):
     def __init__(self, toxic_texts: list[str], detoxified_texts: list[str]):
@@ -71,41 +30,7 @@ class ToxicTextDataset(Dataset):
     
     def __len__(self):
         return len(self.toxic_texts)
-
-def train_one_epoch(model, train_loader, optmizer, loss_fn):
-    model.train()
-    progress = tqdm(train_loader)
-    for batch in progress:
-        input, target = batch
-        input, target = input.to(device), target.to(device)
-        output = model(input, target[:-1])
-        output = output.reshape(-1, output.shape[2])
-        target = target[1:].reshape(-1)
-        optmizer.zero_grad()
-        
-        loss = loss_fn(output, target)
-        loss.backward()
-
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
-        optmizer.step()
-        progress.set_postfix({"loss":loss.item()})
-
-def val_one_epoch(model, val_loader, loss_fn):
-    model.eval()
-    progress = tqdm(val_loader)
-    with torch.no_grad():
-        for batch in progress:
-            input, target = batch
-            input, target = input.to(device), target.to(device)
-
-            output = model(input, target[:-1])
-            output = output.reshape(-1, output.shape[2])
-            target = target[1:].reshape(-1)
-            
-            loss = loss_fn(output, target)
-            progress.set_postfix({"loss":loss.item()})
     
-
 def collate_batch(batch: list):
     max_size = MAX_SENTENCE_SIZE
     _toxic_batch, _detoxic_batch = [], []
@@ -127,11 +52,6 @@ def collate_batch(batch: list):
     return _toxic_batch.T, _detoxic_batch.T
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="")
-    parser.add_argument("--epochs", type=int, default=5)
-    parser.add_argument("--batch_size", type=int, default=32)
-    args = parser.parse_args()
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     text_data = torch.load(DATASET_PATH)
@@ -139,15 +59,37 @@ if __name__ == "__main__":
     train_dataset, val_dataset = random_split(toxic_text_dataset, [0.7, 0.3])
     vocab_size = len(toxic_text_dataset.vocab)
 
+    available_models = {
+        "transformer": {
+            "model": transformer_model.DetoxificationModel(512, vocab_size, 0.1, MAX_SENTENCE_SIZE, PAD_IDX, device).to(device),
+            "train": transformer_model.train_one_epoch,
+            "validate": transformer_model.val_one_epoch,
+        },
+        "LSTM": {
+            "model": None,
+            "train": None,
+            "validate": None,
+        }
+    }
+
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("model_type", choices=list(available_models.keys()))
+    parser.add_argument("--epochs", type=int, default=5)
+    parser.add_argument("--batch_size", type=int, default=32)
+    args = parser.parse_args()
+
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_batch)
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=collate_batch)
 
-    model = DetoxificationModel(512, vocab_size, 0.1, MAX_SENTENCE_SIZE, device).to(device)
+
+    model = available_models[args.model_type]["model"]
+    train_one_epoch = available_models[args.model_type]["train"]
+    val_one_epoch = available_models[args.model_type]["validate"]
     optmizer = optim.Adam(model.parameters(), 3e-4)
     loss_fn = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
 
     for epoch in range(args.epochs):
-        train_one_epoch(model, train_dataloader, optmizer, loss_fn)
-        val_one_epoch(model, val_dataloader, loss_fn)
+        train_one_epoch(model, train_dataloader, optmizer, loss_fn, device)
+        val_one_epoch(model, val_dataloader, loss_fn, device)
         print("SAVE MODEL")
         torch.save(model.state_dict(), MODEL_WEIGHTS_PATH)
