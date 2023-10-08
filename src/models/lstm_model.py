@@ -2,29 +2,69 @@ from tqdm import tqdm
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import random
+
+class Encoder(nn.Module):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, p) -> None:
+        super(Encoder, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        
+        self.dropout = nn.Dropout(p)
+        self.embedding = nn.Embedding(input_size, embedding_size)
+        self.rnn = nn.LSTM(embedding_size, hidden_size, num_layers, dropout=p)
+
+    def forward(self, x):
+        embedding = self.dropout(self.embedding(x))
+        _, (hidden, cell) = self.rnn(embedding)
+
+        return hidden, cell
+
+class Decoder(nn.Module):
+    def __init__(self, input_size, embedding_size, hidden_size, output_size, num_layers, p) -> None:
+        super(Decoder, self).__init__()
+
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        
+        self.dropout = nn.Dropout(p)
+        self.embedding = nn.Embedding(input_size, embedding_size)
+        self.rnn = nn.LSTM(embedding_size, hidden_size, num_layers, dropout=p)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, hidden, cell):
+        x = x.unsqueeze(0)
+        embedding = self.dropout(self.embedding(x))
+        outputs, (hidden, cell) = self.rnn(embedding, (hidden, cell))
+        predictions = self.fc(outputs)
+        predictions = predictions.squeeze(0)
+        return predictions, hidden, cell
 
 class DetoxificationModel(nn.Module):
-    def __init__(self, vocab_size, embedding_dim, hidden_dim):
-        super().__init__()
+    def __init__(self, vocab_size, embedding_dim, hidden_dim, device):
+        super(DetoxificationModel, self).__init__()
+        self.vocab_size = vocab_size
+        self.device = device
+        self.encoder = Encoder(vocab_size, embedding_dim, hidden_dim, 2, 0.5)
+        self.decoder = Decoder(vocab_size, embedding_dim, hidden_dim, vocab_size, 2, 0.5)
         
-        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim)
-        self.lstm = nn.LSTM(embedding_dim, hidden_dim, num_layers=2, dropout=0.25)
-        self.hidden2tag = nn.Sequential(
-            nn.Linear(hidden_dim, hidden_dim//2),
-            nn.ReLU(),
-            nn.Dropout(0.25),
-            nn.Linear(hidden_dim//2, vocab_size),
-        )
-        
-    def forward(self, text):
+    def forward(self, source, target , teacher_force_ratio = 0.5):
+        batch_size = source.shape[1]
+        target_len = source.shape[0]
+        target_vocab_size = self.vocab_size
 
-        # text shape= [sent len, batch size]
-        embeds = self.word_embeddings(text)
-        lstm_out, _ = self.lstm(embeds)
-        predictions = self.hidden2tag(lstm_out)
-        # predictions shape = [sent len, batch size, output dim]
-        return predictions#F.log_softmax(predictions,dim=1)
-    
+        outputs = torch.zeros(target_len, batch_size, target_vocab_size).to(self.device)
+
+        hidden, cell = self.encoder(source)
+        x = target[0]
+        for t in range(1, target_len):
+            output, hidden, cell = self.decoder(x, hidden, cell)
+            outputs[t] = output
+            best_guess = output.argmax(1)
+
+            x = target[t] if random.random() < teacher_force_ratio else best_guess
+        
+        return outputs
 
 def train_one_epoch(model, train_loader, optmizer, loss_fn, device):
     model.train()
@@ -32,13 +72,15 @@ def train_one_epoch(model, train_loader, optmizer, loss_fn, device):
     for batch in progress:
         input, target = batch
         input, target = input.to(device), target.to(device)
-        output = model(input).to(device)
+        output = model(input, target).to(device)
         output = output.reshape(-1, output.shape[2])
         target = target.reshape(-1)
         optmizer.zero_grad()
         
         loss = loss_fn(output, target)
         loss.backward()
+
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
 
         optmizer.step()
         progress.set_postfix({"loss":loss.item()})
@@ -51,7 +93,7 @@ def val_one_epoch(model, val_loader, loss_fn, device):
             input, target = batch
             input, target = input.to(device), target.to(device)
 
-            output = model(input).to(device)
+            output = model(input, target).to(device)
             output = output.reshape(-1, output.shape[2])
             target = target.reshape(-1)
             
