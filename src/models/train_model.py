@@ -2,7 +2,9 @@ import torch
 import pathlib
 import os
 import argparse
+
 import transformer_model
+import lstm_model
 
 from torch.utils.data import random_split, Dataset, DataLoader
 from torchtext.vocab import build_vocab_from_iterator
@@ -66,9 +68,9 @@ if __name__ == "__main__":
             "validate": transformer_model.val_one_epoch,
         },
         "LSTM": {
-            "model": None,
-            "train": None,
-            "validate": None,
+            "model": lstm_model.DetoxificationModel(vocab_size, 512, 1024),
+            "train": lstm_model.train_one_epoch,
+            "validate": lstm_model.val_one_epoch,
         }
     }
 
