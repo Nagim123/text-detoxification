@@ -6,7 +6,10 @@
 <br/>
 **Group numer**: B21-DS-02
 ## Installation
-TODO
+Install English word tokenizator
+```
+python -m spacy download en_core_web_sm
+```
 ## Data transformation
 TODO
 ## Training
