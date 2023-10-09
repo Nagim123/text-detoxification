@@ -88,7 +88,7 @@ if __name__ == "__main__":
             "predict": transformer_model.predict,
         },
         "LSTM": {
-            "model": lstm_model.DetoxificationModel(len(vocab), 512, 1024, device).to(device),
+            "model": lstm_model.DetoxificationModel(len(vocab), 300, 1024, device).to(device),
             "predict": lstm_model.predict,
         }
     }

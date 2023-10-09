@@ -50,7 +50,7 @@ class DetoxificationModel(nn.Module):
         
     def forward(self, source, target , teacher_force_ratio = 0.5):
         batch_size = source.shape[1]
-        target_len = source.shape[0]
+        target_len = target.shape[0]
         target_vocab_size = self.vocab_size
 
         outputs = torch.zeros(target_len, batch_size, target_vocab_size).to(self.device)
@@ -104,17 +104,15 @@ def predict(model, vocab, input_data, tokenizer, max_sentence_size, bos_idx, eos
     model.eval()
     tokenized_data = tokenizer.tokenize(input_data)
     tokenized_data = torch.tensor([bos_idx] + vocab(tokenized_data) + [eos_idx]).unsqueeze(0).permute((1, 0))
-    result = []
+    y_input = torch.tensor([[bos_idx]], dtype=torch.long, device=device)
     with torch.no_grad():
-        pred = model(tokenized_data).to(device)
-        _, token_id = torch.max(pred, axis=2)
-        token_id.view(-1)
-        print(token_id)
-        for token in token_id:
-            result.append(token.item())
-    cleared_result = []
-    for i in range(min(max_sentence_size,len(result))):
-        if result[i] == eos_idx:
-            break
-        cleared_result.append(result[i])
-    return torch.tensor(cleared_result)
+        for _ in range(max_sentence_size):
+            pred = model(tokenized_data, y_input).to(device)
+            _, token_id = torch.max(pred, axis=2)
+            next_token = token_id.view(-1)[-1].item()
+            if next_token == eos_idx:
+                break
+            next_tensor = torch.tensor([[next_token]])
+            print(next_tensor)
+            y_input = torch.cat((y_input, next_tensor), dim=0)
+    return y_input.view(-1)
