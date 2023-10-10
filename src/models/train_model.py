@@ -5,6 +5,7 @@ import argparse
 
 import transformer_model
 import lstm_model
+import simple_lstm_model
 
 from torch.utils.data import random_split, Dataset, DataLoader
 from torchtext.vocab import build_vocab_from_iterator
@@ -71,6 +72,11 @@ if __name__ == "__main__":
             "model": lstm_model.DetoxificationModel(vocab_size, 300, 1024, device).to(device),
             "train": lstm_model.train_one_epoch,
             "validate": lstm_model.val_one_epoch,
+        },
+        "simple_LSTM": {
+            "model": simple_lstm_model.DetoxificationModel(300, 1024, vocab_size),
+            "train": simple_lstm_model.train_one_epoch,
+            "validate": simple_lstm_model.val_one_epoch,
         }
     }
 
