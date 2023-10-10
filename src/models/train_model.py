@@ -74,7 +74,7 @@ if __name__ == "__main__":
             "validate": lstm_model.val_one_epoch,
         },
         "simple_LSTM": {
-            "model": simple_lstm_model.DetoxificationModel(300, 1024, vocab_size),
+            "model": simple_lstm_model.DetoxificationModel(300, 1024, vocab_size).to(device),
             "train": simple_lstm_model.train_one_epoch,
             "validate": simple_lstm_model.val_one_epoch,
         }
