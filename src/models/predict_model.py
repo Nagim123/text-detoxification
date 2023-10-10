@@ -6,11 +6,13 @@ import spacy
 import transformer_model
 import lstm_model
 from torchtext.vocab import build_vocab_from_iterator
+from torchmetrics import TranslationEditRate
 
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
-INPUT_FILE_PATH = os.path.join(SCRIPT_PATH, "../../data/raw/test.txt")
+EXTERNAL_PATH = os.path.join(SCRIPT_PATH, "../../data/external")
+INTERIM_PATH = os.path.join(SCRIPT_PATH, "../../data/interim")
 MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models")
-DATASET_PATH = os.path.join(SCRIPT_PATH, "../../data/interim/dataset.pt")
+DATASET_PATH = os.path.join(INTERIM_PATH, "dataset.pt")
 MAX_SENTENCE_SIZE = 100
 UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
 
@@ -26,10 +28,6 @@ def tensor2text(input_tensor, vocab):
     return [idx2word[i] for i in tokens_list]
 
 if __name__ == "__main__":
-
-    with open(INPUT_FILE_PATH, "r") as input_file:
-        input_data = input_file.read().split('\n')
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     text_data = torch.load(DATASET_PATH)
 
@@ -50,15 +48,40 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("model_type", choices=list(available_models.keys()))
+    parser.add_argument("file_path", type=str)
     parser.add_argument("--weights", type=str, default="weights.pt")
+    parser.add_argument("--compare", type=str)
+    parser.add_argument("--out_dir", type=str)
     args = parser.parse_args()
+
+    with open(os.path.join(EXTERNAL_PATH, args.file_path), "r") as input_file:
+        input_data = input_file.read().split('\n')
+    if args.compare:
+        with open(os.path.join(EXTERNAL_PATH, args.file_path), "r") as compare_file:
+            compare_data = compare_file.read().split('\n')
+        if len(input_data) != len(compare_data):
+            raise Exception("The number of lines in input and compare files must be equal!")
 
     model = available_models[args.model_type]["model"]
     model.load_state_dict(torch.load(os.path.join(MODEL_WEIGHTS_PATH, args.weights), map_location=device))
     model_predict = available_models[args.model_type]["predict"]
 
+    s_tokenizer = SpacyTokenizer()
+    ter = TranslationEditRate()
+
     result = []
-    for data in input_data:
-        result.append(tensor2text(model_predict(model, vocab, data, SpacyTokenizer(), MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab))
+    ter_scores = []
+    for i in range(len(input_data)):
+        result.append(tensor2text(model_predict(model, vocab, input_data[i], s_tokenizer, MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab))    
         result[-1] = " ".join(result[-1][1:])
+        if args.compare:
+            ter_scores.append(ter(result[-1][1:], [compare_data[i]]).item())
+    if args.out_dir:
+        with open(os.path.join(EXTERNAL_PATH, args.out_dir), "w") as write_file:
+            for i in range(len(result)):
+                if args.compare:
+                    write_file.write(f"{result[i]}${ter_scores[i]}\n")
+                else:
+                    write_file.write(result[i] + '\n')
     print(result)
+    print(ter_scores)
