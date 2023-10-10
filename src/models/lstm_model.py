@@ -113,6 +113,5 @@ def predict(model, vocab, input_data, tokenizer, max_sentence_size, bos_idx, eos
             if next_token == eos_idx:
                 break
             next_tensor = torch.tensor([[next_token]])
-            print(next_tensor)
             y_input = torch.cat((y_input, next_tensor), dim=0)
     return y_input.view(-1)

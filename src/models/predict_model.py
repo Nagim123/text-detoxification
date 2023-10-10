@@ -6,58 +6,13 @@ import spacy
 import transformer_model
 import lstm_model
 from torchtext.vocab import build_vocab_from_iterator
-from torch import nn
 
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 INPUT_FILE_PATH = os.path.join(SCRIPT_PATH, "../../data/raw/test.txt")
-MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models/weights.pt")
+MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models")
 DATASET_PATH = os.path.join(SCRIPT_PATH, "../../data/interim/dataset.pt")
 MAX_SENTENCE_SIZE = 100
 UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
-
-class DetoxificationModel(nn.Module):
-    def __init__(self, embedding_size, vocab_size, dropout, max_len, device):
-        super(DetoxificationModel, self).__init__()
-        self.word_embedding = nn.Embedding(vocab_size, embedding_size)
-        self.position_embedding = nn.Embedding(max_len, embedding_size)
-        self.device = device
-        self.transformer = nn.Transformer(embedding_size, 8, 3, 3, 4, dropout, batch_first=False)
-        self.fc_out = nn.Linear(embedding_size, vocab_size)
-        self.dropout = nn.Dropout(dropout)
-        self.src_pad_idx = PAD_IDX
-    
-    def make_src_mask(self, src):
-        src_mask = src.transpose(0, 1) == self.src_pad_idx
-        return src_mask
-    
-    def forward(self, src, trg):
-        src_seq_len, N = src.shape
-        trg_seq_len, N = trg.shape
-
-        src_positions = (
-            torch.arange(0, src_seq_len).unsqueeze(1).expand(src_seq_len, N)
-            .to(self.device)
-        )
-        trg_positions = (
-            torch.arange(0, trg_seq_len).unsqueeze(1).expand(trg_seq_len, N)
-            .to(self.device)
-        )
-        embed_src = self.dropout(
-            (self.word_embedding(src) + self.position_embedding(src_positions))
-        )
-        embed_trg = self.dropout(
-            (self.word_embedding(trg) + self.position_embedding(trg_positions))
-        )
-        src_padding_mask = self.make_src_mask(src)
-        trg_mask = self.transformer.generate_square_subsequent_mask(trg_seq_len, self.device)
-        out = self.transformer(
-            embed_src,
-            embed_trg,
-            src_key_padding_mask = src_padding_mask,
-            tgt_mask = trg_mask
-        )
-        out = self.fc_out(out)
-        return out
 
 class SpacyTokenizer:
     def __init__(self) -> None:
@@ -73,7 +28,7 @@ def tensor2text(input_tensor, vocab):
 if __name__ == "__main__":
 
     with open(INPUT_FILE_PATH, "r") as input_file:
-        input_data = input_file.read()
+        input_data = input_file.read().split('\n')
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     text_data = torch.load(DATASET_PATH)
@@ -95,11 +50,15 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("model_type", choices=list(available_models.keys()))
+    parser.add_argument("--weights", type=str, default="weights.pt")
     args = parser.parse_args()
 
     model = available_models[args.model_type]["model"]
-    model.load_state_dict(torch.load(MODEL_WEIGHTS_PATH, map_location=device))
+    model.load_state_dict(torch.load(os.path.join(MODEL_WEIGHTS_PATH, args.weights), map_location=device))
     model_predict = available_models[args.model_type]["predict"]
 
-    result = tensor2text(model_predict(model, vocab, input_data, SpacyTokenizer(), MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab)
-    print(" ".join(result[1:]))
+    result = []
+    for data in input_data:
+        result.append(tensor2text(model_predict(model, vocab, data, SpacyTokenizer(), MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab))
+        result[-1] = " ".join(result[-1][1:])
+    print(result)
