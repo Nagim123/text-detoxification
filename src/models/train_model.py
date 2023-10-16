@@ -1,10 +1,10 @@
 import torch
 import argparse
 
-from utils.dataset_reader import create_dataloaders_from_dataset_file
-from utils.constants import DATASET_PATH, MODEL_WEIGHTS_PATH
-from trainer.trainer import Seq2SeqTrainer
-from architectures import lstm, ae_lstm, transformer
+from core.utils.dataset_reader import create_dataloaders_from_dataset_file
+from core.utils.constants import DATASET_PATH, MODEL_WEIGHTS_PATH
+from core.trainer.trainer import Seq2SeqTrainer
+from core.architectures import lstm, ae_lstm, transformer
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=32)
     args = parser.parse_args()
 
-    train_dataloader, val_dataloader = create_dataloaders_from_dataset_file(DATASET_PATH)
+    train_dataloader, val_dataloader = create_dataloaders_from_dataset_file(DATASET_PATH, args.batch_size)
     
     model = available_models[args.model_type].to(device)
     trainer = Seq2SeqTrainer(model, train_dataloader, val_dataloader, device)
