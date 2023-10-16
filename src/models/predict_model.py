@@ -5,8 +5,10 @@ import os
 import spacy
 import transformer_model
 import lstm_model
+import simple_lstm_model
 from torchtext.vocab import build_vocab_from_iterator
 from torchmetrics import TranslationEditRate
+from torchmetrics.text.rouge import ROUGEScore
 
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 EXTERNAL_PATH = os.path.join(SCRIPT_PATH, "../../data/external")
@@ -43,6 +45,10 @@ if __name__ == "__main__":
         "LSTM": {
             "model": lstm_model.DetoxificationModel(len(vocab), 300, 1024, device).to(device),
             "predict": lstm_model.predict,
+        },
+        "simple_LSTM": {
+            "model": simple_lstm_model.DetoxificationModel(300, 1024, len(vocab)).to(device),
+            "predict": simple_lstm_model.predict
         }
     }
     
@@ -68,19 +74,22 @@ if __name__ == "__main__":
 
     s_tokenizer = SpacyTokenizer()
     ter = TranslationEditRate()
+    rogue = ROUGEScore(rouge_keys=("rouge1"))
 
     result = []
     ter_scores = []
+    rog_score = []
     for i in range(len(input_data)):
         result.append(tensor2text(model_predict(model, vocab, input_data[i], s_tokenizer, MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab))    
         result[-1] = " ".join(result[-1][1:])
         if args.compare:
             ter_scores.append(ter(result[-1][1:], [compare_data[i]]).item())
+            rog_score.append(rogue(result[-1][1:], compare_data[i])["rouge1_fmeasure"].item())
     if args.out_dir:
         with open(os.path.join(EXTERNAL_PATH, args.out_dir), "w") as write_file:
             for i in range(len(result)):
                 if args.compare:
-                    write_file.write(f"{result[i]}${ter_scores[i]}\n")
+                    write_file.write(f"{result[i]}${ter_scores[i]}${rog_score[i]}\n")
                 else:
                     write_file.write(result[i] + '\n')
     print(result)
