@@ -5,6 +5,7 @@ import os
 import spacy
 import transformer_model
 import lstm_model
+import simple_lstm_model
 from torchtext.vocab import build_vocab_from_iterator
 from torchmetrics import TranslationEditRate
 from torchmetrics.text.rouge import ROUGEScore
@@ -44,6 +45,10 @@ if __name__ == "__main__":
         "LSTM": {
             "model": lstm_model.DetoxificationModel(len(vocab), 300, 1024, device).to(device),
             "predict": lstm_model.predict,
+        },
+        "simple_LSTM": {
+            "model": simple_lstm_model.DetoxificationModel(300, 1024, len(vocab)).to(device),
+            "predict": simple_lstm_model.predict
         }
     }
     
