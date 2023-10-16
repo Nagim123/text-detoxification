@@ -79,8 +79,8 @@ def create_dataloaders_from_dataset_file(filepath: str, batch_size: int) -> tupl
         batch_size (int): Size of a batch.
 
     Returns:
-        Dataloader: Training dataloader.
-        Dataloader: Validation dataloader.
+        DataLoader: Training dataloader.
+        DataLoader: Validation dataloader.
     """
     if not os.path.exists(filepath):
         raise Exception(f"Cannot find dataset file {filepath}.\n Did you forget to create dataset using 'make_dataset.py'?")
