@@ -16,6 +16,7 @@ class Seq2SeqTrainer():
         self.loss_fn = nn.CrossEntropyLoss(ignore_index=PAD_IDX)
         self.device = device
 
+
     def train_one_epoch(self):
         self.model.train()
         progress = tqdm(self.train_loader)
@@ -24,7 +25,8 @@ class Seq2SeqTrainer():
             input, target = input.to(self.device), target.to(self.device)
             output = self.model(input, target)
             output = output.reshape(-1, output.shape[2])
-            target = target[1:].reshape(-1)
+            target = target[target.shape[0]-output.shape[0]:]
+            target = target.reshape(-1)
             self.optmizer.zero_grad()
             
             loss = self.loss_fn(output, target)
@@ -44,7 +46,8 @@ class Seq2SeqTrainer():
 
                 output = self.model(input, target)
                 output = output.reshape(-1, output.shape[2])
-                target = target[1:].reshape(-1)
+                target = target[target.shape[0]-output.shape[0]:]
+                target = target.reshape(-1)
                 
                 loss = self.loss_fn(output, target)
                 progress.set_postfix({"loss":loss.item()})
