@@ -1,23 +1,30 @@
+from ..utils.constants import PAD_IDX, MAX_SENTENCE_SIZE, VOCAB_SIZE
 import torch
 from torch import nn
-from tqdm import tqdm
+
 
 class DetoxificationModel(nn.Module):
-    def __init__(self, embedding_size, vocab_size, dropout, max_len, pad_idx, device):
+    def __init__(self, device):
         super(DetoxificationModel, self).__init__()
+        embedding_size = 512
+        dropout = 0.1
+        vocab_size = VOCAB_SIZE
+
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
-        self.position_embedding = nn.Embedding(max_len, embedding_size)
+        self.position_embedding = nn.Embedding(MAX_SENTENCE_SIZE, embedding_size)
         self.device = device
         self.transformer = nn.Transformer(embedding_size, 8, 3, 3, 4, dropout, batch_first=False)
         self.fc_out = nn.Linear(embedding_size, vocab_size)
         self.dropout = nn.Dropout(dropout)
-        self.src_pad_idx = pad_idx
+        self.src_pad_idx = PAD_IDX
     
     def make_src_mask(self, src):
         src_mask = src.transpose(0, 1) == self.src_pad_idx
         return src_mask
     
     def forward(self, src, trg):
+        trg = trg[:-1]
+
         src_seq_len, N = src.shape
         trg_seq_len, N = trg.shape
 
@@ -47,38 +54,7 @@ class DetoxificationModel(nn.Module):
         return out
 
 
-def train_one_epoch(model, train_loader, optmizer, loss_fn, device):
-    model.train()
-    progress = tqdm(train_loader)
-    for batch in progress:
-        input, target = batch
-        input, target = input.to(device), target.to(device)
-        output = model(input, target[:-1])
-        output = output.reshape(-1, output.shape[2])
-        target = target[1:].reshape(-1)
-        optmizer.zero_grad()
-        
-        loss = loss_fn(output, target)
-        loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
-        optmizer.step()
-        progress.set_postfix({"loss":loss.item()})
-
-def val_one_epoch(model, val_loader, loss_fn, device):
-    model.eval()
-    progress = tqdm(val_loader)
-    with torch.no_grad():
-        for batch in progress:
-            input, target = batch
-            input, target = input.to(device), target.to(device)
-
-            output = model(input, target[:-1])
-            output = output.reshape(-1, output.shape[2])
-            target = target[1:].reshape(-1)
-            
-            loss = loss_fn(output, target)
-            progress.set_postfix({"loss":loss.item()})
     
 def predict(model, vocab, input_data, tokenizer, max_sentence_size, bos_idx, eos_idx, device):
     model.eval()

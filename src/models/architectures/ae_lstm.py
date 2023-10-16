@@ -1,8 +1,7 @@
-from tqdm import tqdm
 import torch.nn as nn
-import torch.nn.functional as F
 import torch
 import random
+from ..utils.constants import VOCAB_SIZE
 
 class Encoder(nn.Module):
     def __init__(self, input_size, embedding_size, hidden_size, num_layers, p) -> None:
@@ -41,12 +40,14 @@ class Decoder(nn.Module):
         return predictions, hidden, cell
 
 class DetoxificationModel(nn.Module):
-    def __init__(self, vocab_size, embedding_dim, hidden_dim, device):
+    def __init__(self, device):
         super(DetoxificationModel, self).__init__()
-        self.vocab_size = vocab_size
+        self.vocab_size = VOCAB_SIZE
+        embedding_dim = 300
+        hidden_dim = 1024
         self.device = device
-        self.encoder = Encoder(vocab_size, embedding_dim, hidden_dim, 2, 0.5)
-        self.decoder = Decoder(vocab_size, embedding_dim, hidden_dim, vocab_size, 2, 0.5)
+        self.encoder = Encoder(self.vocab_size, embedding_dim, hidden_dim, 2, 0.5)
+        self.decoder = Decoder(self.vocab_size, embedding_dim, hidden_dim, self.vocab_size, 2, 0.5)
         
     def forward(self, source, target , teacher_force_ratio = 0.5):
         batch_size = source.shape[1]
@@ -65,40 +66,6 @@ class DetoxificationModel(nn.Module):
             x = target[t] if random.random() < teacher_force_ratio else best_guess
         
         return outputs
-
-def train_one_epoch(model, train_loader, optmizer, loss_fn, device):
-    model.train()
-    progress = tqdm(train_loader)
-    for batch in progress:
-        input, target = batch
-        input, target = input.to(device), target.to(device)
-        output = model(input, target).to(device)
-        output = output.reshape(-1, output.shape[2])
-        target = target.reshape(-1)
-        optmizer.zero_grad()
-        
-        loss = loss_fn(output, target)
-        loss.backward()
-
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
-
-        optmizer.step()
-        progress.set_postfix({"loss":loss.item()})
-
-def val_one_epoch(model, val_loader, loss_fn, device):
-    model.eval()
-    progress = tqdm(val_loader)
-    with torch.no_grad():
-        for batch in progress:
-            input, target = batch
-            input, target = input.to(device), target.to(device)
-
-            output = model(input, target).to(device)
-            output = output.reshape(-1, output.shape[2])
-            target = target.reshape(-1)
-            
-            loss = loss_fn(output, target)
-            progress.set_postfix({"loss":loss.item()})
 
 def predict(model, vocab, input_data, tokenizer, max_sentence_size, bos_idx, eos_idx, device):
     model.eval()
