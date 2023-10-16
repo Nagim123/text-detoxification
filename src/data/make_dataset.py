@@ -1,16 +1,10 @@
-from zipfile import ZipFile
-from tqdm import tqdm
-import torch
 import logging
 import argparse
-import spacy
 import pandas as pd
-import pathlib
 import os
 
-SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
-DATASET_PATH = os.path.join(SCRIPT_PATH, "../../data/raw/filtered_paranmt.zip")
-OUTPUT_DIR_PATH = os.path.join(SCRIPT_PATH, "../../data/interim")
+from zipfile import ZipFile
+from constants import DATASET_PATH, OUTPUT_DIR_PATH, PREPROCESS_SCRIPT_PATH
 
 def read_dataset() -> pd.DataFrame:
     zip_object = ZipFile(DATASET_PATH)
@@ -34,14 +28,7 @@ def parse_dataset(dataset_df: pd.DataFrame) -> tuple[list[str], list[str]]:
     balanced_df.reset_index(inplace=True, drop=True)
     return balanced_df["toxic"].tolist(), balanced_df["detoxified"].tolist()
 
-def tokenize_texts(texts: list[str], do_logging: bool = False):
-    spacy_eng = spacy.load("en_core_web_sm")
-    tokenized_texts = []
-    if do_logging:
-        texts = tqdm(texts)
-    for text in texts:
-        tokenized_texts.append([tok.text for tok in spacy_eng.tokenizer(text)])
-    return tokenized_texts
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
@@ -56,11 +43,18 @@ if __name__ == "__main__":
     logging.info("Parsing dataset...")
     toxic, detoxified = parse_dataset(df)
     
-    logging.info("Tokenization for toxic text...")
-    tokenized_toxic = tokenize_texts(toxic, args.logging)
-    logging.info("Tokenization for detoxified text...")
-    tokenized_detoxified = tokenize_texts(detoxified, args.logging)
+    temp1_path = os.path.join(OUTPUT_DIR_PATH, "temp1.txt")
+    temp2_path = os.path.join(OUTPUT_DIR_PATH, "temp2.txt")
+
+    with open(temp1_path, "w", encoding="UTF-8") as temp:
+        temp.write("\n".join(toxic))
     
-    logging.info("Saving on disk...")
-    torch.save({"toxic": tokenized_toxic, "detoxified": tokenized_detoxified}, os.path.join(OUTPUT_DIR_PATH, "dataset.pt"))
+    with open(temp2_path, "w", encoding="UTF-8") as temp:
+        temp.write("\n".join(detoxified))
+
+    logging.info("Tokenizing and saveing on disk...")
+    do_logging = "--logging" if args.logging else ""
+    os.system(f"python {PREPROCESS_SCRIPT_PATH} {temp1_path} dataset.pt --tranlated_text_file {temp2_path} {do_logging}")
+    os.remove(temp1_path)
+    os.remove(temp2_path)
     logging.info("Done!")
