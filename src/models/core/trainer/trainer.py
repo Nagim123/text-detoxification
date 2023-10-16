@@ -7,8 +7,15 @@ from ..utils.constants import PAD_IDX
 
 
 class Seq2SeqTrainer():
+    """
+    Class for training Seq2Seq models.
+    """
     def __init__(self, model: nn.Module, train_loader: DataLoader, val_loader: DataLoader, device: str) -> None:
+        """
+        Create Seq2Seq trainer by providing model, dataloaders and device to train on.
+
         
+        """
         self.model = model
         self.val_loader = val_loader
         self.train_loader = train_loader

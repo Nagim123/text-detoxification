@@ -70,9 +70,17 @@ def __collate_batch(batch: list) -> tuple[torch.tensor, torch.tensor]:
     # Transpose batches to have shape [SEQ_LEN, BATCH]
     return toxic_batch.T, detoxic_batch.T
 
-def create_dataloaders_from_dataset_file(filepath: str, batch_size: int) -> tuple[DataLoader, DataLoader, int]:
+def create_dataloaders_from_dataset_file(filepath: str, batch_size: int) -> tuple[DataLoader, DataLoader]:
     """
     Create dataloaders from .pt file created with 'make_dataset.py' script.
+
+    Parameters:
+        filepath (str): Path to dataset.pt file.
+        batch_size (int): Size of a batch.
+
+    Returns:
+        Dataloader: Training dataloader.
+        Dataloader: Validation dataloader.
     """
     if not os.path.exists(filepath):
         raise Exception(f"Cannot find dataset file {filepath}.\n Did you forget to create dataset using 'make_dataset.py'?")
