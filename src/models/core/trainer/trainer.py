@@ -24,8 +24,11 @@ class Seq2SeqTrainer():
             input, target = batch
             input, target = input.to(self.device), target.to(self.device)
             output = self.model(input, target)
+
+            diff = target.shape[0]-output.shape[0]
             output = output.reshape(-1, output.shape[2])
-            target = target[target.shape[0]-output.shape[0]:]
+            
+            target = target[diff:]
             target = target.reshape(-1)
             self.optmizer.zero_grad()
             
@@ -43,10 +46,13 @@ class Seq2SeqTrainer():
             for batch in progress:
                 input, target = batch
                 input, target = input.to(self.device), target.to(self.device)
-
+                
                 output = self.model(input, target)
+                diff = target.shape[0]-output.shape[0]
+
                 output = output.reshape(-1, output.shape[2])
-                target = target[target.shape[0]-output.shape[0]:]
+                
+                target = target[diff:]
                 target = target.reshape(-1)
                 
                 loss = self.loss_fn(output, target)
