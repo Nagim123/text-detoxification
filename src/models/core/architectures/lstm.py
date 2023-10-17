@@ -22,12 +22,3 @@ class DetoxificationModel(nn.Module):
         lstm_out, _ = self.lstm(embeds)
         predictions = self.hidden2tag(lstm_out)
         return predictions
-
-def predict(model, vocab, input_data, tokenizer, max_sentence_size, bos_idx, eos_idx, device):
-    model.eval()
-    tokenized_data = tokenizer.tokenize(input_data)
-    tokenized_data = torch.tensor([bos_idx] + vocab(tokenized_data) + [eos_idx]).unsqueeze(0).permute((1, 0))
-    with torch.no_grad():
-        pred = model(tokenized_data).to(device)
-        _, token_ids = torch.max(pred, axis=2)
-    return token_ids.view(-1)
