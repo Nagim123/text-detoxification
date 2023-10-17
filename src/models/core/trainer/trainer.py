@@ -1,5 +1,5 @@
 import torch
-import logging
+import os
 from torch import nn
 from torch import optim
 from torch.utils.data import DataLoader
@@ -122,9 +122,13 @@ class Seq2SeqTrainer():
             epochs (int): How much epochs to train.
             save_path (str): Path where to save model.
         """
+        best_loss = 1e9
         for epoch in range(epochs):
             print(f"Epoch: {epoch}")
             train_loss = self.train_one_epoch()
             val_loss = self.val_one_epoch()
+            if val_loss < best_loss:
+                best_loss = val_loss
+                torch.save(self.model.state_dict(), os.path.join(save_path, "best_weights.pt"))
             print(f"Train loss:{train_loss} Validation loss:{val_loss}")
-            torch.save(self.model.state_dict(), save_path)
+            torch.save(self.model.state_dict(), os.path.join(save_path, "last_weights.pt"))
