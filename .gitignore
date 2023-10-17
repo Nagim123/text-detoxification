@@ -3,3 +3,4 @@ notebooks/.ipynb_checkpoints/*
 opennotebook.cmd
 __pycache__
 data/interim/dataset.pt
+data/interim/vocab.pt

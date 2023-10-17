@@ -23,7 +23,8 @@ class DetoxificationModel(nn.Module):
         return src_mask
     
     def forward(self, src, trg):
-        trg = trg[:-1]
+        if self.training:
+            trg = trg[:-1]
 
         src_seq_len, N = src.shape
         trg_seq_len, N = trg.shape

@@ -10,11 +10,10 @@ class TextPreprocessor():
     """
     Class to tokenize and create vocabulary over text.
     """
-    def __init__(self, toxic_data_filepath: str, detoxified_data_filepath: str = None, do_logging: bool = False, apply_vocab: bool = True) -> None:
+    def __init__(self, toxic_data_filepath: str, detoxified_data_filepath: str = None, do_logging: bool = False, vocab_save_path: str = None) -> None:
         self.toxic_texts, self.detoxified_texts = [], []
         self.do_logging = do_logging
-        self.apply_vocab = apply_vocab
-        
+        self.vocab_save_path = vocab_save_path
 
         with open(toxic_data_filepath, "r", encoding="UTF-8") as input_file:
             self.toxic_texts = input_file.read().split('\n')
@@ -26,7 +25,7 @@ class TextPreprocessor():
         self.toxic_texts = self.__tokenize_texts(self.toxic_texts)
         self.detoxified_texts = self.__tokenize_texts(self.detoxified_texts)
 
-        if apply_vocab:
+        if not self.vocab_save_path is None:
             self.vocab = build_vocab_from_iterator(self.toxic_texts + self.detoxified_texts, min_freq=2, specials=SPECIAL_SYMBOLS, max_tokens=VOCAB_SIZE)
             self.vocab.set_default_index(0)
             
@@ -52,8 +51,9 @@ class TextPreprocessor():
             "toxic": self.toxic_texts,
             "detoxified": self.detoxified_texts
         }
-        if self.apply_vocab:
-            data_to_save["vocab"] = self.vocab
+        if not self.vocab_save_path is None:
+            vocab_save_path = os.path.join(OUTPUT_DIR_PATH, self.vocab_save_path)
+            torch.save(self.vocab, vocab_save_path)
         
         torch.save(data_to_save, filepath)
 
@@ -62,10 +62,9 @@ if __name__ == "__main__":
     parser.add_argument("text_file", type=str)
     parser.add_argument("output_name", type=str)
     parser.add_argument("--tranlated_text_file", type=str)
-    parser.add_argument("--vocab_encode", action="store_true")
+    parser.add_argument("--vocab_encode")
     parser.add_argument("--logging", action="store_true")
     args = parser.parse_args()
 
     text_preprocessor = TextPreprocessor(args.text_file, args.tranlated_text_file, args.logging, args.vocab_encode)
     text_preprocessor.save_to_pt(os.path.join(OUTPUT_DIR_PATH, args.output_name))
-
