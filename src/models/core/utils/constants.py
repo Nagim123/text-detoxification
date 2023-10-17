@@ -1,3 +1,7 @@
+"""
+All file paths and vocabulary related constants.
+"""
+
 import pathlib
 import os
 
