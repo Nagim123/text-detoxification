@@ -32,13 +32,12 @@ if __name__ == "__main__":
     # Create preprocessor with dataset vocabulary
     toxic_text_manager = TextManager(args.file_path, args.compare, device)
 
-    results = []
     if args.model_type == "T5":
         model = available_models[args.model_type]
-        predict_using_external_models(model, toxic_text_manager)
+        results = predict_using_external_models(model, toxic_text_manager)
     else:
         # Load model with weights
         model = available_models[args.model_type]
         model.load_state_dict(torch.load(os.path.join(MODEL_WEIGHTS_PATH, args.weights), map_location=device))
-        predict_using_custom_models(model, toxic_text_manager, device)
+        results = predict_using_custom_models(model, toxic_text_manager, device)
     print(results)

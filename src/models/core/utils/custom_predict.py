@@ -46,6 +46,17 @@ def model_predict(model: nn.Module, tensor_input: torch.tensor, device: str) -> 
     return y_input.view(-1)
 
 def predict_using_custom_models(model: nn.Module, toxic_text_manager: TextManager, device: str) -> list[str]:
+    """
+    Predict detoxified texts using models implemented by me.
+
+    Parameters:
+        model (nn.Module): Model to do prediction.
+        toxic_text_manager (TextManager): Input data container.
+        device (str): Device where prediction will be executed.
+
+    Returns:
+        list[str]: Detoxified texts.
+    """
     # Run prediction for each sentence in input
     result = []
     for i in range(len(toxic_text_manager)):
@@ -57,3 +68,4 @@ def predict_using_custom_models(model: nn.Module, toxic_text_manager: TextManage
         result.append(toxic_text_manager.tensor2text(output))
         # Detokenize text
         result[-1] = " ".join(result[-1][1:])
+    return result

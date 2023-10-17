@@ -75,19 +75,38 @@ class TextManager():
     def get_raw(self, index: int) -> str:
         """
         Get raw toxic text.
+
+        Parameters:
+            index (int): Index of text.
+
+        Returns:
+            str: Raw toxic text.
         """
         return self.raw_toxic[index]
     
     def get_tokenized(self, index: int) -> list[str]:
         """
         Get tokenized toxic text.
+
+        Parameters:
+            index (int): Index of text.
+
+        Returns:
+            list[str]: Tokenized toxic text.
         """
         return self.tokenized_toxic[index]
     
     def get_encoded(self, index: int) -> list[int]:
         """
         Get vocabulary encoded toxic text.
+
+        Parameters:
+            index (int): Index of text.
+
+        Returns:
+            list[int]: Encoded toxic text.
         """
+        # Use vocabulary for encoding
         return self.text2tensor(self.tokenized_toxic[index])
 
     def __len__(self) -> int:
