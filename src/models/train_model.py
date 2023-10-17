@@ -26,7 +26,6 @@ if __name__ == "__main__":
 
     # Create train loaders from dataset
     train_dataloader, val_dataloader = create_dataloaders_from_dataset_file(DATASET_PATH, args.batch_size)
-    
     # Get model that was choosen by user
     model = available_models[args.model_type].to(device)
     # Set up trainer

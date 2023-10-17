@@ -33,7 +33,7 @@ class Seq2SeqTrainer():
         self.device = device
 
 
-    def train_one_epoch(self) -> None:
+    def train_one_epoch(self) -> float:
         """
         Train model for one epoch.
         """
@@ -42,6 +42,8 @@ class Seq2SeqTrainer():
         self.model.train()
         # Keep track of progress
         progress = tqdm(self.train_loader)
+        # Mean loss
+        mean_loss = 0.0
         for batch in progress:
             # Get inputs and targets from batch and move them into specified device
             input, target = batch
@@ -71,9 +73,11 @@ class Seq2SeqTrainer():
             # Optimize weights
             self.optmizer.step()
             # Show loss information
-            progress.set_postfix({"loss":loss.item()})
-
-    def val_one_epoch(self) -> None:
+            mean_loss += loss.item()
+            progress.set_postfix({"loss":loss.item()})    
+        return mean_loss/len(self.train_loader)
+    
+    def val_one_epoch(self) -> float:
         """
         Validate model for one epoch.
         """
@@ -82,6 +86,8 @@ class Seq2SeqTrainer():
         self.model.eval()
         # Keep track of progress
         progress = tqdm(self.val_loader)
+        # Mean loss
+        mean_loss = 0.0
         with torch.no_grad():
             for batch in progress:
                 # Get inputs and targets from batch and move them into specified device
@@ -103,8 +109,11 @@ class Seq2SeqTrainer():
                 
                 # Calculate loss
                 loss = self.loss_fn(output, target)
+                mean_loss += loss.item()
                 progress.set_postfix({"loss":loss.item()})
 
+        return mean_loss/len(self.val_loader)
+    
     def train(self, epochs: int, save_path: str) -> None:
         """
         Do training of model for specified number of epochs.
@@ -114,7 +123,8 @@ class Seq2SeqTrainer():
             save_path (str): Path where to save model.
         """
         for epoch in range(epochs):
-            logging.info(f"Epoch: {epoch}")
-            self.train_one_epoch()
-            self.val_one_epoch()
+            print(f"Epoch: {epoch}")
+            train_loss = self.train_one_epoch()
+            val_loss = self.val_one_epoch()
+            print(f"Train loss:{train_loss} Validation loss:{val_loss}")
             torch.save(self.model.state_dict(), save_path)
