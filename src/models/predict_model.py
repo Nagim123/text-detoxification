@@ -7,20 +7,45 @@ from torchtext.vocab import Vocab
 from core.utils.constants import MODEL_WEIGHTS_PATH, PREPROCESS_SCRIPT_PATH, INTERIM_PATH, BOS_IDX, EOS_IDX, MAX_SENTENCE_SIZE
 from core.architectures import lstm, ae_lstm, transformer
 
-class TextConverter():
+class ToxicTextManager():
     """
-    Class to convert token list to tensor and vice versa.
+    Class to process raw text into tokenized and encoded ones.
     """
 
-    def __init__(self, vocab: Vocab) -> None:
+    def __init__(self, toxic_data_filepath: str, detoxified_data_filepath: str = None) -> None:
         """
-        Create Seq2Seq trainer by providing model, dataloaders and device to train on.
+        Create toxic text manager.
 
         Parameters:
-            vocab (Vocab): Vocabulary for converting.
+            toxic_data_filepath (str): Path to file with toxic texts separated by new lines.
+            detoxified_data_filepath (str): Path to file with detoxified texts separated by new lines (Optional for comparison).
         """
 
-        self.vocab = vocab
+        # Read toxic texts
+        with open(toxic_data_filepath, "r") as read_file:
+            self.clean_toxic = read_file.read().split('\n')
+        
+        # Has command line arguments if detoxified texts are provided.
+        compare_arg = ""
+        # Read detoxified texts
+        if not detoxified_data_filepath is None:
+            compare_arg = "--translated_text_file " + detoxified_data_filepath
+            with open(detoxified_data_filepath, "r") as read_file:
+                self.clean_detoxified = read_file.read().split('\n')
+
+        # Call external script to prepare text for prediction
+        os.system(f"python {PREPROCESS_SCRIPT_PATH} {args.file_path} temp.pt {compare_arg}")
+        
+        # Get processed data from script resulting file and delete it
+        processed_data_path = os.path.join(INTERIM_PATH, "temp.pt")
+        data_file = torch.load(processed_data_path, map_location=device)
+        os.remove(processed_data_path)
+
+        # Get toxic and detoxified texts
+        self.tokenized_toxic, self.tokenized_detoxified = data_file["toxic"], data_file["detoxified"]
+        
+        # Read vocabulary of dataset
+        self.vocab = torch.load(os.path.join(INTERIM_PATH, "vocab.pt"), map_location=device)
 
     def text2tensor(self, tokenized_text: list[str]) -> torch.tensor:
         """
@@ -50,10 +75,22 @@ class TextConverter():
         idx2word = self.vocab.get_itos()
         # Use it on tensor
         return [idx2word[idx] for idx in encoded_tensor.tolist()]
+    
+    def get_clean(self, index):
+        return self.clean_toxic[index]
+    
+    def get_tokenized(self, index):
+        return self.tokenized_toxic[index]
+    
+    def get_encoded(self, index):
+        return self.text2tensor(self.tokenized_toxic[index])
+
+    def __len__(self):
+        return len(self.clean_toxic)
 
 def model_predict(model: nn.Module, tensor_input: torch.tensor) -> torch.tensor:
     """
-    Do prediction for any Seq2Seq model.
+    Do prediction for any pytorch Seq2Seq model.
 
     Parameters:
         model (nn.Module): Model to do prediction.
@@ -100,7 +137,8 @@ if __name__ == "__main__":
     available_models = {
         "lstm": lstm.DetoxificationModel(),
         "ae_lstm": ae_lstm.DetoxificationModel(device),
-        "transformer": transformer.DetoxificationModel(device)
+        "transformer": transformer.DetoxificationModel(device),
+        "T5": None,
     }
     
     # Read command line arguments
@@ -112,22 +150,8 @@ if __name__ == "__main__":
     parser.add_argument("--out_dir", type=str)
     args = parser.parse_args()
 
-    # Call external script to prepare text for prediction
-    compare_arg = "" if args.compare is None else "--translated_text_file " + args.compare
-    os.system(f"python {PREPROCESS_SCRIPT_PATH} {args.file_path} temp.pt {compare_arg}")
-    
-    # Get processed data from script resulting file and delete it
-    processed_data_path = os.path.join(INTERIM_PATH, "temp.pt")
-    data_file = torch.load(processed_data_path, map_location=device)
-    os.remove(processed_data_path)
-    # Read vocabulary of dataset
-    vocab = torch.load(os.path.join(INTERIM_PATH, "vocab.pt"), map_location=device)
-    
-    # Get toxic and detoxified texts
-    toxic_texts, detoxified_texts = data_file["toxic"], data_file["detoxified"]
-    
     # Create preprocessor with dataset vocabulary
-    text_processor = TextConverter(vocab)
+    toxic_text_manager = ToxicTextManager(args.file_path, args.compare)
 
     # Load model with weights
     model = available_models[args.model_type]
@@ -135,13 +159,13 @@ if __name__ == "__main__":
 
     # Run prediction for each sentence in input
     result = []
-    for i in range(len(toxic_texts)):
-        # Encode text to tensor using text processor
-        encoded_text = text_processor.text2tensor(toxic_texts[i])
+    for i in range(len(toxic_text_manager)):
+        # Get encoded text
+        encoded_text = toxic_text_manager.get_encoded(i)
         # Predict detoxified text
         output = model_predict(model, encoded_text)
         # Add decoded result to result list
-        result.append(text_processor.tensor2text(output))
+        result.append(toxic_text_manager.tensor2text(output))
         # Detokenize text
         result[-1] = " ".join(result[-1][1:])
         
