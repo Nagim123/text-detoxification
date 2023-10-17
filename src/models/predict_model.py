@@ -17,7 +17,7 @@ if __name__ == "__main__":
         "lstm": lstm.DetoxificationModel(),
         "ae_lstm": ae_lstm.DetoxificationModel(device),
         "transformer": transformer.DetoxificationModel(device),
-        #"T5": t5_paranmt.DetoxificationModel(),
+        "T5": t5_paranmt.DetoxificationModel(),
     }
     
     # Read command line arguments
@@ -32,12 +32,15 @@ if __name__ == "__main__":
     # Create preprocessor with dataset vocabulary
     toxic_text_manager = TextManager(args.file_path, args.compare, device)
 
+    # Load model 
+    model = available_models[args.model_type]
+    weights_path = os.path.join(MODEL_WEIGHTS_PATH, args.weights)
+
+    # Load weigths and make predictions
     if args.model_type == "T5":
-        model = available_models[args.model_type]
+        model.load_model(weights_path)    
         results = predict_using_external_models(model, toxic_text_manager)
     else:
-        # Load model with weights
-        model = available_models[args.model_type]
-        model.load_state_dict(torch.load(os.path.join(MODEL_WEIGHTS_PATH, args.weights), map_location=device))
+        model.load_state_dict(torch.load(weights_path, map_location=device))
         results = predict_using_custom_models(model, toxic_text_manager, device)
     print(results)
