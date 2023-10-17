@@ -130,5 +130,5 @@ class Seq2SeqTrainer():
             if val_loss < best_loss:
                 best_loss = val_loss
                 torch.save(self.model.state_dict(), os.path.join(save_path, "best_weights.pt"))
-            print(f"Train loss:{train_loss} Validation loss:{val_loss}")
+            print(f"Average train loss:{train_loss} \n Average validation loss:{val_loss}")
             torch.save(self.model.state_dict(), os.path.join(save_path, "last_weights.pt"))
