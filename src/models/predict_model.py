@@ -1,46 +1,45 @@
 import torch
 import argparse
 import os
-from torchtext.vocab import build_vocab_from_iterator
-from torchmetrics import TranslationEditRate
-from torchmetrics.text.rouge import ROUGEScore
+
+from torch import nn
+from torchtext.vocab import Vocab
+from core.utils.constants import MODEL_WEIGHTS_PATH, PREPROCESS_SCRIPT_PATH, INTERIM_PATH, BOS_IDX, EOS_IDX, MAX_SENTENCE_SIZE
+from core.architectures import lstm, ae_lstm, transformer
 
 class TextProcessor():
-    def __init__(self, text_corpus) -> None:
-        pass
+    def __init__(self, vocab: Vocab) -> None:
+        self.vocab = vocab
 
-    def text2tensor(self):
-        pass
+    def text2tensor(self, tokenized_text: list[str]) -> torch.tensor:
+        return self.vocab(tokenized_text)
 
-    def tensor2text(self):
-        pass
+    def tensor2text(self, encoded_tensor: str) -> list[str]:
+        idx2word = self.vocab.get_itos()
+        return [idx2word[idx] for idx in encoded_tensor.tolist()]
 
-def tensor2text(input_tensor, vocab):
-    idx2word = vocab.get_itos()
-    tokens_list = input_tensor.tolist()
-    return [idx2word[i] for i in tokens_list]
+def model_predict(model: nn.Module, encoded_input: list[int]):
+    model.eval()
+    tensor_input = torch.tensor([BOS_IDX] + encoded_input + [EOS_IDX]).unsqueeze(1)
+    y_input = torch.tensor([[BOS_IDX]], dtype=torch.long, device=device)
+    with torch.no_grad():
+        for _ in range(MAX_SENTENCE_SIZE):
+            pred = model(tensor_input, y_input).to(device)
+            _, token_id = torch.max(pred, axis=2)
+            next_token = token_id.view(-1)[-1].item()
+            if next_token == EOS_IDX:
+                break
+            next_tensor = torch.tensor([[next_token]])
+            y_input = torch.cat((y_input, next_tensor), dim=0)
+    return y_input.view(-1)
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    text_data = torch.load(DATASET_PATH)
 
-    special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
-    vocab = build_vocab_from_iterator(text_data["toxic"] + text_data["detoxified"], specials=special_symbols, max_tokens=10000, min_freq=2)
-    vocab.set_default_index(0)
-    
     available_models = {
-        "transformer": {
-            "model": transformer_model.DetoxificationModel(512, len(vocab), 0.1, MAX_SENTENCE_SIZE, PAD_IDX, device).to(device),
-            "predict": transformer_model.predict,
-        },
-        "LSTM": {
-            "model": lstm_model.DetoxificationModel(len(vocab), 300, 1024, device).to(device),
-            "predict": lstm_model.predict,
-        },
-        "simple_LSTM": {
-            "model": simple_lstm_model.DetoxificationModel(300, 1024, len(vocab)).to(device),
-            "predict": simple_lstm_model.predict
-        }
+        "lstm": lstm.DetoxificationModel(),
+        "ae_lstm": ae_lstm.DetoxificationModel(device),
+        "transformer": transformer.DetoxificationModel(device)
     }
     
     parser = argparse.ArgumentParser(description="")
@@ -51,37 +50,20 @@ if __name__ == "__main__":
     parser.add_argument("--out_dir", type=str)
     args = parser.parse_args()
 
-    with open(os.path.join(EXTERNAL_PATH, args.file_path), "r") as input_file:
-        input_data = input_file.read().split('\n')
-    if args.compare:
-        with open(os.path.join(EXTERNAL_PATH, args.file_path), "r") as compare_file:
-            compare_data = compare_file.read().split('\n')
-        if len(input_data) != len(compare_data):
-            raise Exception("The number of lines in input and compare files must be equal!")
+    compare_arg = "" if args.compare is None else "--translated_text_file " + args.compare
+    os.system(f"python {PREPROCESS_SCRIPT_PATH} {args.file_path} temp.pt {compare_arg}")
+    processed_data_path = os.path.join(INTERIM_PATH, "temp.pt")
+    data_file = torch.load(processed_data_path, map_location=device)
+
+    toxic_texts, detoxified_texts = data_file["toxic"], data_file["detoxified"]
 
     model = available_models[args.model_type]["model"]
     model.load_state_dict(torch.load(os.path.join(MODEL_WEIGHTS_PATH, args.weights), map_location=device))
     model_predict = available_models[args.model_type]["predict"]
 
-    s_tokenizer = SpacyTokenizer()
-    ter = TranslationEditRate()
-    rogue = ROUGEScore(rouge_keys=("rouge1"))
-
     result = []
-    ter_scores = []
-    rog_score = []
-    for i in range(len(input_data)):
-        result.append(tensor2text(model_predict(model, vocab, input_data[i], s_tokenizer, MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, device), vocab))    
+    for i in range(len(toxic_texts)):
+        result.append(model_predict(model, toxic_texts[i]))    
         result[-1] = " ".join(result[-1][1:])
-        if args.compare:
-            ter_scores.append(ter(result[-1][1:], [compare_data[i]]).item())
-            rog_score.append(rogue(result[-1][1:], compare_data[i])["rouge1_fmeasure"].item())
-    if args.out_dir:
-        with open(os.path.join(EXTERNAL_PATH, args.out_dir), "w") as write_file:
-            for i in range(len(result)):
-                if args.compare:
-                    write_file.write(f"{result[i]}${ter_scores[i]}${rog_score[i]}\n")
-                else:
-                    write_file.write(result[i] + '\n')
+        
     print(result)
-    print(ter_scores)

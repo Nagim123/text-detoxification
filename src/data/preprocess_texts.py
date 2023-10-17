@@ -49,10 +49,9 @@ class TextPreprocessor():
 
     def save_to_pt(self, filepath: str) -> None:
         data_to_save = {
-            "toxic": self.toxic_texts
+            "toxic": self.toxic_texts,
+            "detoxified": self.detoxified_texts
         }
-        if not self.detoxified_texts is None:
-            data_to_save["detoxified"] = self.detoxified_texts
         if self.apply_vocab:
             data_to_save["vocab"] = self.vocab
         
