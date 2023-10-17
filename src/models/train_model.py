@@ -1,5 +1,7 @@
 import torch
 import argparse
+import random
+import numpy as np
 
 from core.utils.dataset_reader import create_dataloaders_from_dataset_file
 from core.utils.constants import DATASET_PATH, MODEL_WEIGHTS_PATH
@@ -9,7 +11,11 @@ from core.architectures import lstm, ae_lstm, transformer
 if __name__ == "__main__":
     # Detect device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+    # Set reproducability
+    torch.manual_seed(0)
+    random.seed(0)
+    np.random.seed(0)
+
     # List of available models
     available_models = {
         "lstm": lstm.DetoxificationModel(),
