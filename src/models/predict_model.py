@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # Load weigths and make predictions
     if args.model_type == "T5":
-        model.load_model(weights_path)    
+        model.load_model()    
         results = predict_using_external_models(model, toxic_text_manager)
     else:
         model.load_state_dict(torch.load(weights_path, map_location=device))
