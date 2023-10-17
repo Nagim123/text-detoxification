@@ -1,28 +1,19 @@
 import torch
 import argparse
-import pathlib
 import os
-import spacy
-import transformer_model
-import lstm_model
-import simple_lstm_model
 from torchtext.vocab import build_vocab_from_iterator
 from torchmetrics import TranslationEditRate
 from torchmetrics.text.rouge import ROUGEScore
 
-SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
-EXTERNAL_PATH = os.path.join(SCRIPT_PATH, "../../data/external")
-INTERIM_PATH = os.path.join(SCRIPT_PATH, "../../data/interim")
-MODEL_WEIGHTS_PATH = os.path.join(SCRIPT_PATH, "../../models")
-DATASET_PATH = os.path.join(INTERIM_PATH, "dataset.pt")
-MAX_SENTENCE_SIZE = 100
-UNK_IDX, PAD_IDX, BOS_IDX, EOS_IDX = 0, 1, 2, 3
+class TextProcessor():
+    def __init__(self, text_corpus) -> None:
+        pass
 
-class SpacyTokenizer:
-    def __init__(self) -> None:
-        self.spacy_eng = spacy.load("en_core_web_sm")
-    def tokenize(self, input_data: str) -> list[str]:
-        return [tok.text for tok in self.spacy_eng.tokenizer(input_data.lower())]
+    def text2tensor(self):
+        pass
+
+    def tensor2text(self):
+        pass
 
 def tensor2text(input_tensor, vocab):
     idx2word = vocab.get_itos()

@@ -1,8 +1,7 @@
 import torch
 import os
 from torch.utils.data import random_split, Dataset, DataLoader
-from torchtext.vocab import build_vocab_from_iterator
-from .constants import MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, PAD_IDX, VOCAB_SIZE
+from .constants import MAX_SENTENCE_SIZE, BOS_IDX, EOS_IDX, PAD_IDX
 
 class ToxicTextDataset(Dataset):
     """
@@ -19,16 +18,9 @@ class ToxicTextDataset(Dataset):
         # Store texts
         self.toxic_texts = toxic_texts
         self.detoxified_texts = detoxified_texts
-        # Special symbols for vocabulary
-        self.special_symbols = ['<unk>', '<pad>', '<bos>', '<eos>']
-        # Create vocabulary with maximum 'VOCAB_SIZE' tokens
-        self.vocab = build_vocab_from_iterator(toxic_texts + detoxified_texts, specials=self.special_symbols, max_tokens=VOCAB_SIZE, min_freq=2)
-        # Set unknown index to be 0
-        self.vocab.set_default_index(0)
-
+        
     def __getitem__(self, index: int) -> tuple[list, list]:
-        # Encode texts using vocabulary
-        return self.vocab(self.toxic_texts[index]), self.vocab(self.detoxified_texts[index])
+        return self.toxic_texts[index], self.detoxified_texts[index]
     
     def __len__(self):
         return len(self.toxic_texts)
