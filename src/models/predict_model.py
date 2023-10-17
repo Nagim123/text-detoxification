@@ -22,17 +22,19 @@ def model_predict(model: nn.Module, tensor_input: list[int]):
     model.eval()
     tensor_input = tensor_input.unsqueeze(1)
     y_input = torch.tensor([[BOS_IDX]], dtype=torch.long, device=device)
+    one_shot = True
+    
     with torch.no_grad():
         for _ in range(MAX_SENTENCE_SIZE):
             pred = model(tensor_input, y_input).to(device)
             _, token_id = torch.max(pred, axis=2)
             next_token = token_id.view(-1)[-1].item()
             if next_token == EOS_IDX:
-                break
+                return token_id.view(-1) if one_shot else y_input.view(-1)
             next_tensor = torch.tensor([[next_token]])
             y_input = torch.cat((y_input, next_tensor), dim=0)
-    return y_input.view(-1)
-
+            one_shot = False
+    
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
