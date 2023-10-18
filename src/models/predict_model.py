@@ -1,10 +1,13 @@
 import torch
 import argparse
 import os
+import json
+
 from core.utils.text_manager import TextManager
 from core.utils.custom_predict import predict_using_custom_models
 from core.utils.huggingface_predict import predict_using_external_models
 from core.utils.constants import MODEL_WEIGHTS_PATH
+from core.utils.metrics_calculator import generate_metric_evalulation
 from core.architectures import lstm, ae_lstm, transformer, t5_paranmt
 
 
@@ -16,7 +19,7 @@ if __name__ == "__main__":
     available_models = {
         "lstm": lstm.DetoxificationModel(),
         "ae_lstm": ae_lstm.DetoxificationModel(device),
-        "transformer": transformer.DetoxificationModel(device),
+        "transformer": transformer.DetoxificationModel(device, inference_mode=True),
         "T5": t5_paranmt.DetoxificationModel(),
     }
     
@@ -38,9 +41,19 @@ if __name__ == "__main__":
 
     # Load weigths and make predictions
     if args.model_type == "T5":
-        model.load_model(weights_path)    
+        model.load_model()    
         results = predict_using_external_models(model, toxic_text_manager)
     else:
         model.load_state_dict(torch.load(weights_path, map_location=device))
         results = predict_using_custom_models(model, toxic_text_manager, device)
-    print(results)
+    
+    if not args.out_dir is None:
+        if args.compare is None:
+            with open(args.out_dir, "w") as output_file:
+                output_file.write("\n".join(results))
+        else:
+            evaluation_results = generate_metric_evalulation(results, toxic_text_manager)
+            with open(args.out_dir, "w") as output_file:
+                output_file.write(json.dumps(evaluation_results))
+    else:
+        print(results)

@@ -27,8 +27,11 @@ class TextManager():
         if not detoxified_data_filepath is None:
             compare_arg = "--translated_text_file " + detoxified_data_filepath
             with open(detoxified_data_filepath, "r") as read_file:
-                self.clean_detoxified = read_file.read().split('\n')
-
+                self.raw_detoxified = read_file.read().split('\n')
+            # Check if not each toxic text has their detoxified version
+            if len(self.raw_detoxified) != len(self.raw_toxic):
+                # If not raise exception
+                raise Exception(f"Toxic texts: {len(self.raw_toxic)}. Detoxified texts: {len(self.raw_detoxified)}. Must be equal!")
         # Call external script to prepare text for prediction
         os.system(f"python {PREPROCESS_SCRIPT_PATH} {toxic_data_filepath} temp.pt {compare_arg}")
         
@@ -83,6 +86,18 @@ class TextManager():
             str: Raw toxic text.
         """
         return self.raw_toxic[index]
+    
+    def get_raw_detoxified(self, index: int) -> str:
+        """
+        Get raw detoxified text.
+
+        Parameters:
+            index (int): Index of text.
+
+        Returns:
+            str: Raw detoxified text.
+        """
+        return self.raw_detoxified[index]
     
     def get_tokenized(self, index: int) -> list[str]:
         """

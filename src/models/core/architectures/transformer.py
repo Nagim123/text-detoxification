@@ -4,12 +4,13 @@ from torch import nn
 
 
 class DetoxificationModel(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, inference_mode = False):
         super(DetoxificationModel, self).__init__()
         embedding_size = 512
         dropout = 0.1
         vocab_size = VOCAB_SIZE
 
+        self.inference_mode = inference_mode
         self.word_embedding = nn.Embedding(vocab_size, embedding_size)
         self.position_embedding = nn.Embedding(MAX_SENTENCE_SIZE, embedding_size)
         self.device = device
@@ -23,7 +24,7 @@ class DetoxificationModel(nn.Module):
         return src_mask
     
     def forward(self, src, trg):
-        if self.training:
+        if not self.inference_mode:
             trg = trg[:-1]
 
         src_seq_len, N = src.shape
