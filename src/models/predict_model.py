@@ -19,7 +19,7 @@ if __name__ == "__main__":
     available_models = {
         "lstm": lstm.DetoxificationModel(),
         "ae_lstm": ae_lstm.DetoxificationModel(device),
-        "transformer": transformer.DetoxificationModel(device),
+        "transformer": transformer.DetoxificationModel(device, inference_mode=True),
         "T5": t5_paranmt.DetoxificationModel(),
     }
     
