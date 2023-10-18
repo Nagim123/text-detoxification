@@ -1,6 +1,11 @@
 import matplotlib.pyplot as plt
 import json
 import argparse
+import pathlib
+import os
+
+SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
+FIGURES_PATH = os.path.join(SCRIPT_PATH, "../../reports/figures")
 
 def visualize_metrics(metric_data: dict, model_name: str) -> None:
     """
@@ -42,7 +47,7 @@ def visualize_metrics(metric_data: dict, model_name: str) -> None:
     figure.suptitle(f"Metrics for {model_name}")
     
     # Save figure
-    plt.savefig(f"{model_name}_metrics.png")
+    plt.savefig(os.path.join(FIGURES_PATH, f"{model_name}_metrics.png"))
 
 def visaulize_loss_plots(model_name: str) -> None:
     """
@@ -67,7 +72,7 @@ def visaulize_loss_plots(model_name: str) -> None:
     plt.ylabel("loss")
     plt.title(f"{model_name} losses")
     # Save figure
-    plt.savefig(f"{model_name}_losses.png")
+    plt.savefig(os.path.join(FIGURES_PATH, f"{model_name}_losses.png"))
 
 
 if __name__ == "__main__":
