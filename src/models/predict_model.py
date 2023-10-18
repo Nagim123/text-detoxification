@@ -54,6 +54,6 @@ if __name__ == "__main__":
         else:
             evaluation_results = generate_metric_evalulation(results, toxic_text_manager)
             with open(args.out_dir, "w") as output_file:
-                output_file.write(json.dump(evaluation_results))
+                output_file.write(json.dumps(evaluation_results))
     else:
         print(results)

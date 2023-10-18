@@ -12,9 +12,9 @@ def generate_metric_evalulation(predictions: list[str], text_manager: TextManage
             "generated": prediction,
             "original": original,
             "true_translated": target,
-            "BLEU": bleu_metric.calculate_bleu(original, prediction),
-            "TER score": ter_metric.calculate_ter(original, prediction),
-            "ROUGES": rouges_metric.calculate_rogues(original, prediction)
+            "BLEU": bleu_metric.calculate_bleu(target, prediction),
+            "TER score": ter_metric.calculate_ter(target, prediction),
+            "ROUGES": rouges_metric.calculate_rogues(target, prediction)
         }
 
         report_data.append(evaluation_info)

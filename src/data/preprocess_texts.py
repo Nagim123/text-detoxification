@@ -116,12 +116,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("text_file", type=str)
     parser.add_argument("output_name", type=str)
-    parser.add_argument("--tranlated_text_file", type=str)
+    parser.add_argument("--translated_text_file", type=str)
     parser.add_argument("--vocab_encode")
     parser.add_argument("--logging", action="store_true")
     args = parser.parse_args()
 
     # Preprocess texts from input files
-    text_preprocessor = TextPreprocessor(args.text_file, args.tranlated_text_file, args.logging, args.vocab_encode)
+    text_preprocessor = TextPreprocessor(args.text_file, args.translated_text_file, args.logging, args.vocab_encode)
     # Save the result
     text_preprocessor.save_to_pt(os.path.join(OUTPUT_DIR_PATH, args.output_name))
