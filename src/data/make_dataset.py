@@ -92,7 +92,7 @@ if __name__ == "__main__":
     # Call external script to convert files to .pt file with tokenized and encoded data.
     logging.info("Tokenizing and saveing on disk...")
     do_logging = "--logging" if args.logging else ""
-    os.system(f"python {PREPROCESS_SCRIPT_PATH} {temp1_path} dataset.pt --tranlated_text_file {temp2_path} --vocab_encode vocab.pt {do_logging}")
+    os.system(f"python {PREPROCESS_SCRIPT_PATH} {temp1_path} dataset.pt --translated_text_file {temp2_path} --vocab_encode vocab.pt {do_logging}")
     # Remove temporal files
     os.remove(temp1_path)
     os.remove(temp2_path)
