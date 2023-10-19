@@ -30,12 +30,12 @@ class TextPreprocessor():
         
         # Read toxic data
         with open(toxic_data_filepath, "r", encoding="UTF-8") as input_file:
-            self.toxic_texts = input_file.read().split('\n')
+            self.toxic_texts = input_file.read().lower().split('\n')
         
         # Read detoxified data if provided
         if not detoxified_data_filepath is None:
             with open(detoxified_data_filepath, "r", encoding="UTF-8") as input_file:
-                self.detoxified_texts = input_file.read().split('\n')
+                self.detoxified_texts = input_file.read().lower().split('\n')
         
         # Tokenize texts
         self.toxic_texts = self.__tokenize_texts(self.toxic_texts)
