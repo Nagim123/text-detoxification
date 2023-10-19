@@ -6,11 +6,11 @@
 <br/>
 **Group numer**: B21-DS-02
 ## Installation
-1. Download repository
+#### 1. Download repository
 ```console
 git clone https://github.com/Nagim123/text-detoxification.git
 ```
-2. Create virtual environment and activate it (OPTIONAL)
+#### 2. Create virtual environment and activate it (OPTIONAL)
 ```console
 python -m venv venv
 ```
@@ -22,11 +22,11 @@ Linux:
 ```console
 source ./venv/bin/activate
 ```
-3. Install python libraries
+#### 3. Install python libraries
 ```console
 pip install -r requirements.txt
 ```
-4. Download English word tokenizator
+#### 4. Download English word tokenizator
 ```console
 python -m spacy download en_core_web_sm
 ```
