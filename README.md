@@ -55,7 +55,7 @@ python text-detoxification/src/models/train_model.py [lstm|ae_lstm|transformer] 
 ```
 For example:
 ```console
-python /kaggle/working/text-detoxification/src/models/train_model.py lstm --epochs 10 --batch_size 64
+python text-detoxification/src/models/train_model.py lstm --epochs 10 --batch_size 64
 ```
 The best and last weights will be saved in *text-detoxification\models* path.
 ## Prediction
