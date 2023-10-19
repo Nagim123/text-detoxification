@@ -10,11 +10,23 @@
 ```console
 git clone https://github.com/Nagim123/text-detoxification.git
 ```
-2. Install python libraries
+2. Create virtual environment and activate it (OPTIONAL)
+```console
+python -m venv venv
+```
+Windows:
+```console
+venv\Scripts\activate
+```
+Linux:
+```console
+source ./venv/bin/activate
+```
+3. Install python libraries
 ```console
 pip install -r requirements.txt
 ```
-3. Download English word tokenizator
+4. Download English word tokenizator
 ```console
 python -m spacy download en_core_web_sm
 ```
