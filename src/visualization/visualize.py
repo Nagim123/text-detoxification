@@ -58,7 +58,18 @@ def visaulize_loss_plots(model_name: str) -> None:
     """
     # Average losses per epoch obtained from Kaggle notebook output during training.
     models_losses = {
-        "transformer": [3.0, 2.5, 2.3, 2.2, 2.1, 1.9, 1.85, 1.7]
+        "lstm": {
+            "train_loss": [4.454, 4.081, 3.913, 3.786, 3.680, 3.582, 3.493, 3.412, 3.340, 3.274],
+            "val_loss": [4.167, 4.010, 3.943, 3.924, 3.933, 3.963, 4.005, 4.046, 4.162]
+        },
+        "ae_lstm": {
+            "train_loss": [1,2,3,4],
+            "val_loss": [1,3,3,4]
+        },
+        "transformer": {
+            "train_loss": [3.172, 2.481, 2.290, 2.174, 2.089, 2.021, 1.966, 1.918, 1.876, 1.839, 1.805, 1.775, 1.746, 1.720, 1.696],
+            "val_loss": [2.560, 2.358, 2.258, 2.195, 2.159, 2.124, 2.106, 2.086, 2.073, 2.064, 2.060, 2.051, 2.048, 2.048, 2.049],
+        }
     }
 
     # Create new figure
