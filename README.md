@@ -53,11 +53,29 @@ To train a model you need to call training script.
 ```console
 python text-detoxification/src/models/train_model.py [lstm|ae_lstm|transformer] --epochs EPOCH_NUM --batch_size BATCH_SIZE
 ```
+You can train any model that I considered in this assignment.
+<br/>
 For example:
 ```console
 python text-detoxification/src/models/train_model.py lstm --epochs 10 --batch_size 64
 ```
 The best and last weights will be saved in *text-detoxification\models* path.
 ## Prediction
-TODO
+If you trained a model and want to make predictions based on some data, you need to create a **test.txt** file and put the text there. Then you can call prediction script like that:
+```console
+python text-detoxification/src/models/predict_model.py [lstm|ae_lstm|transformer] your_weight_name.pt path/to/test.txt
+```
+For metric calculation you need to create additional file **compare.txt** with true detoxification and call script with these flags:
+```console
+python text-detoxification/src/models/predict_model.py [lstm|ae_lstm|transformer] your_weight_name.pt path/to/test.txt --compare path/to/compare.txt --out_dir output_dir/result.json 
+```
+Example:
+1. Without comparison
+```console
+python text-detoxification/src/models/predict_model.py lstm lstm.pt test.txt
+```
+2. With comparison
+```console
+python text-detoxification/src/models/predict_model.py transformer transformer.pt ../test.txt --compare ../compare.txt --out_dir ../result.json 
+```
 ## Visualization
