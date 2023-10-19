@@ -103,4 +103,4 @@ python text-detoxification/src/visualization/visualize.py --metric_file path/to/
 * --plot_losses : Plot average training and validation losses obtained during training by me. (Do not work for T5 model!)
 * --model_name: Name of model (lstm, ae_lstm, transformer, T5)
 <br/>
-Save figures in *text-detoxification/reports/figures* as .png files.
+Saves figures in *text-detoxification/reports/figures* as .png files.
