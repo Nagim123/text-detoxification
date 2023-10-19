@@ -60,7 +60,7 @@ def visaulize_loss_plots(model_name: str) -> None:
     models_losses = {
         "lstm": {
             "train_loss": [4.454, 4.081, 3.913, 3.786, 3.680, 3.582, 3.493, 3.412, 3.340, 3.274],
-            "val_loss": [4.167, 4.010, 3.943, 3.924, 3.933, 3.963, 4.005, 4.046, 4.162]
+            "val_loss": [4.167, 4.010, 3.943, 3.924, 3.933, 3.963, 4.005, 4.046, 4.101, 4.162]
         },
         "ae_lstm": {
             "train_loss": [1,2,3,4],
@@ -75,13 +75,15 @@ def visaulize_loss_plots(model_name: str) -> None:
     # Create new figure
     plt.figure(2)
     # List of epochs numbers
-    epochs = [i for i in range(len(models_losses[model_name]))]
+    epochs = [i for i in range(len(models_losses[model_name]["train_loss"]))]
     # Plot loss/epoch plot
-    plt.plot(epochs, models_losses[model_name])
+    plt.plot(epochs, models_losses[model_name]["train_loss"], label="Train loss")
+    plt.plot(epochs, models_losses[model_name]["val_loss"], label="Validation loss")
     # Set labels and titles
     plt.xlabel("epochs")
     plt.ylabel("loss")
     plt.title(f"{model_name} losses")
+    plt.legend()
     # Save figure
     plt.savefig(os.path.join(FIGURES_PATH, f"{model_name}_losses.png"))
 
