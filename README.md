@@ -31,8 +31,9 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
 ## Data transformation
+For training or prediction you need a vocabulary file. Moreover for training you need preprocessed dataset. There are two ways to generate these files.
 ### ParaNMT preprocessing
-In case you want to use the ParaNMT dataset, you can use a script to automatically prepare it for training.
+In case you want to use the ParaNMT dataset, you can use a script to automatically prepare it for training and generate vocabulary.
 ```console
 python text-detoxification/src/data/make_dataset.py --logging
 ```
@@ -47,6 +48,16 @@ In case you want to use your own data, follow the instruction below:
 python text-detoxification/src/data/preprocess_texts.py toxic.txt dataset.pt --translated_text_file detoxified.txt --vocab_encode vocab.pt [OPTIONAL: --logging]
 ```
 ## Training
-TODO
+To train a model you need **dataset.pt** and **vocab.pt** files. Read *Data transformation* section to know how to generate these files. <br/>
+To train a model you need to call training script.
+```console
+python text-detoxification/src/models/train_model.py [lstm|ae_lstm|transformer] --epochs EPOCH_NUM --batch_size BATCH_SIZE
+```
+For example:
+```console
+python /kaggle/working/text-detoxification/src/models/train_model.py lstm --epochs 10 --batch_size 64
+```
+The best and last weights will be saved in *text-detoxification\models* path.
 ## Prediction
 TODO
+## Visualization
