@@ -3,6 +3,7 @@ import json
 import argparse
 import pathlib
 import os
+import numpy as np
 
 SCRIPT_PATH = pathlib.Path(__file__).parent.resolve()
 FIGURES_PATH = os.path.join(SCRIPT_PATH, "../../reports/figures")
@@ -29,22 +30,28 @@ def visualize_metrics(metric_data: dict, model_name: str) -> None:
         rouge1_f1_scores.append(entry["ROUGES"]["rouge1_fmeasure"])
         rouge2_f1_scores.append(entry["ROUGES"]["rouge2_fmeasure"])
 
-    # Create 4 subplots
-    figure, axis = plt.subplots(1, 4, figsize=(9, 4))
-
+    # Create figure
+    fig = plt.figure(figsize=(5, 7)) #(1, 4, figsize=(9, 4))
+    gs = fig.add_gridspec(2, 3)
+    
+    bins = np.arange(0, 1, 0.1)
     # Draw boxplots
-    axis[0].boxplot(bleu_scores)
-    axis[0].set_title("BLEU")
-    axis[1].boxplot(ter_scores)
-    axis[1].set_title("TER")
-    axis[2].boxplot(rouge1_f1_scores)
-    axis[2].set_title("rouge1")
-    axis[3].boxplot(rouge2_f1_scores)
-    axis[3].set_title("rouge2")
+    ax1 = fig.add_subplot(gs[0, :])
+    ax1.hist(bleu_scores, bins=bins, edgecolor="w")
+    ax1.set_title("BLEU")
+    ax2 = fig.add_subplot(gs[1, 0])
+    ax2.boxplot(ter_scores)
+    ax2.set_title("TER")
+    ax3 = fig.add_subplot(gs[1, 1])
+    ax3.boxplot(rouge1_f1_scores)
+    ax3.set_title("rouge1")
+    ax4 = fig.add_subplot(gs[1, 2])
+    ax4.boxplot(rouge2_f1_scores)
+    ax4.set_title("rouge2")
     
     # Set title and padding
-    figure.tight_layout(pad=3.0)
-    figure.suptitle(f"Metrics for {model_name}")
+    fig.tight_layout(pad=3.0)
+    fig.suptitle(f"Metrics for {model_name}")
     
     # Save figure
     plt.savefig(os.path.join(FIGURES_PATH, f"{model_name}_metrics.png"))
