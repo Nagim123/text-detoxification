@@ -34,7 +34,7 @@ python -m spacy download en_core_web_sm
 ### ParaNMT preprocessing
 In case you want to use the ParaNMT dataset, you can use a script to automatically prepare it for training.
 ```console
-!python text-detoxification/src/data/make_dataset.py --logging
+python text-detoxification/src/data/make_dataset.py --logging
 ```
 You can remove the *--logging* flag if you don't want to see the preprocessing progress.
 ### Custom data preprocessing
