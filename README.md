@@ -31,11 +31,21 @@ pip install -r requirements.txt
 python -m spacy download en_core_web_sm
 ```
 ## Data transformation
-If you want to use ParaNMT dataset you can use script to automaticly prepare it for training. 
 ### ParaNMT preprocessing
-bla bla
+In case you want to use the ParaNMT dataset, you can use a script to automatically prepare it for training.
+```console
+!python text-detoxification/src/data/make_dataset.py --logging
+```
+You can remove the *--logging* flag if you don't want to see the preprocessing progress.
 ### Custom data preprocessing
-bla bla
+In case you want to use your own data, follow the instruction below:
+1. Create two files **toxic.txt** and **detoxified.txt**.
+2. In **toxic.txt** place toxic texts separated by new line.
+3. In **detoxified.txt** place detoxified text versions of the same texts from **toxic.txt** separated by new line.
+4. Call script to prepare data and create vocabulary.
+```
+!python text-detoxification/src/data/preprocess_texts.py toxic.txt dataset.pt --translated_text_file detoxified.txt --vocab_encode vocab.pt [OPTIONAL: --logging]
+```
 ## Training
 TODO
 ## Prediction
