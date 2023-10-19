@@ -18,7 +18,7 @@ class TextManager():
         """
 
         # Read toxic texts
-        with open(toxic_data_filepath, "r") as read_file:
+        with open(toxic_data_filepath, "r", encoding="UTF-8") as read_file:
             self.raw_toxic = read_file.read().split('\n')
         
         # Has command line arguments if detoxified texts are provided.
@@ -26,7 +26,7 @@ class TextManager():
         # Read detoxified texts
         if not detoxified_data_filepath is None:
             compare_arg = "--translated_text_file " + detoxified_data_filepath
-            with open(detoxified_data_filepath, "r") as read_file:
+            with open(detoxified_data_filepath, "r", encoding="UTF-8") as read_file:
                 self.raw_detoxified = read_file.read().split('\n')
             # Check if not each toxic text has their detoxified version
             if len(self.raw_detoxified) != len(self.raw_toxic):
