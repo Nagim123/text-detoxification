@@ -14,7 +14,7 @@ def download_model_weights(url: str, output_dir: str) -> None:
 
 # Web links to download weights
 lstm_url = "https://drive.google.com/file/d/1ZD3Fi51Cmf_lrvlTlUlx0ZTKoWooLkXD/view?usp=share_link"
-ae_lstm_url = "https://drive.google.com/file/d/1I4oFZWK7qecLEiTlPuD_euMn89WY_emp/view?usp=share_link"
+ae_lstm_url = "https://drive.google.com/file/d/1YBajbwVBvdWoNZHSyeTpHtOIv4J6d_my/view?usp=share_link"
 transformer_url = "https://drive.google.com/file/d/1ilGwJUWX5KKk6caIzPI9wSAoBQ186slv/view?usp=share_link"
 
 # Path where to save weights
