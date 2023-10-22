@@ -25,7 +25,7 @@ source ./venv/bin/activate
 ```
 #### 3. Install python libraries
 ```console
-pip install -r requirements.txt
+pip install -r text-detoxification/requirements.txt
 ```
 #### 4. Download English word tokenizator
 ```console
