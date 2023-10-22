@@ -54,6 +54,9 @@ class DetoxificationModel(nn.Module):
         target_len = target.shape[0]
         target_vocab_size = self.vocab_size
 
+        if not self.training:
+            teacher_force_ratio = 0
+
         outputs = torch.zeros(target_len, batch_size, target_vocab_size).to(self.device)
 
         hidden, cell = self.encoder(source)

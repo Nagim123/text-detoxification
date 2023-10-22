@@ -2,6 +2,7 @@ import torch
 import argparse
 import os
 import json
+import warnings
 
 from core.utils.text_manager import TextManager
 from core.utils.custom_predict import predict_using_custom_models
@@ -14,6 +15,8 @@ from core.architectures import lstm, ae_lstm, transformer, t5_paranmt
 if __name__ == "__main__":
     # Detect device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
+    warnings.simplefilter("ignore")
 
     # List of available models
     available_models = {
