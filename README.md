@@ -89,7 +89,7 @@ python text-detoxification/src/models/predict_model.py T5 _ test.txt
 
 ## Download trained models weights
 If you do not want to train models you can use models trained by me. There are 2 ways how to get them.
-1. Download from google drive ([lstm](https://drive.google.com/file/d/1ZD3Fi51Cmf_lrvlTlUlx0ZTKoWooLkXD/view?usp=share_link), [ae_lstm](https://drive.google.com/file/d/1I4oFZWK7qecLEiTlPuD_euMn89WY_emp/view?usp=share_link), [transformer](https://drive.google.com/file/d/1ilGwJUWX5KKk6caIzPI9wSAoBQ186slv/view?usp=share_link)) and put them into *text-detoxification/models* directory.
+1. Download from google drive ([lstm](https://drive.google.com/file/d/1ZD3Fi51Cmf_lrvlTlUlx0ZTKoWooLkXD/view?usp=share_link), [ae_lstm](https://drive.google.com/file/d/1YBajbwVBvdWoNZHSyeTpHtOIv4J6d_my/view?usp=share_link), [transformer](https://drive.google.com/file/d/1ilGwJUWX5KKk6caIzPI9wSAoBQ186slv/view?usp=share_link)) and put them into *text-detoxification/models* directory.
 2. Use script to automatic download.
 ```console
 python text-detoxification/src/data/download_weights.py
