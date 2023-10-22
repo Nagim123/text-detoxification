@@ -19,7 +19,7 @@ def model_predict(model: nn.Module, tensor_input: torch.tensor, device: str) -> 
     # Set model to evaluation mode
     model.eval()
     # Make tensor shape be [SEQ_LEN, 1]
-    tensor_input = tensor_input.unsqueeze(1)
+    tensor_input = tensor_input.unsqueeze(1).to(device)
     # Create additional tensor that will be used as target but with model outputs instead of real data.
     y_input = torch.tensor([[BOS_IDX]], dtype=torch.long, device=device)
     # Can model do inference in one shot (not token by token)
@@ -43,7 +43,7 @@ def model_predict(model: nn.Module, tensor_input: torch.tensor, device: str) -> 
             # If end of sequence was not produce in first try, then model is token by token.
             one_shot = False
     # Return response if maximum sentence length exceeded
-    return y_input.view(-1)
+    return y_input.view(-1).detach().cpu()
 
 def predict_using_custom_models(model: nn.Module, toxic_text_manager: TextManager, device: str) -> list[str]:
     """
