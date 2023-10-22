@@ -6,6 +6,7 @@
 <br/>
 **Group numer**: B21-DS-02
 ## Installation
+Everything was tested using **Python v3.11.3**
 #### 1. Download repository
 ```console
 git clone https://github.com/Nagim123/text-detoxification.git
