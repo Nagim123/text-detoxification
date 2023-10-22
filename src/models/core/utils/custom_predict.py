@@ -38,7 +38,7 @@ def model_predict(model: nn.Module, tensor_input: torch.tensor, device: str) -> 
                 # If end of sequence then stop and return response
                 return token_id.view(-1) if one_shot else y_input.view(-1)
             # Increase artificial target tensor by model output
-            next_tensor = torch.tensor([[next_token]])
+            next_tensor = torch.tensor([[next_token]], device=device)
             y_input = torch.cat((y_input, next_tensor), dim=0)
             # If end of sequence was not produce in first try, then model is token by token.
             one_shot = False
