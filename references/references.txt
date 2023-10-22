@@ -1,0 +1,4 @@
+transformer video - https://www.youtube.com/watch?v=M6adRGJe5cQ&t=554s
+py torch transformer tutorial - https://pytorch.org/tutorials/beginner/transformer_tutorial.html
+autoencoder lstm video - https://www.youtube.com/watch?v=EoGUlvhRYpk&t=1738s
+t5 pre-trained from hugging face - https://huggingface.co/s-nlp/t5-paranmt-detox
