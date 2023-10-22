@@ -20,9 +20,9 @@ if __name__ == "__main__":
 
     # List of available models
     available_models = {
-        "lstm": lstm.DetoxificationModel(),
-        "ae_lstm": ae_lstm.DetoxificationModel(device),
-        "transformer": transformer.DetoxificationModel(device, inference_mode=True),
+        "lstm": lstm.DetoxificationModel().to(device),
+        "ae_lstm": ae_lstm.DetoxificationModel(device).to(device),
+        "transformer": transformer.DetoxificationModel(device, inference_mode=True).to(device),
         "T5": t5_paranmt.DetoxificationModel(),
     }
     
